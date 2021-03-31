@@ -1,1 +1,1 @@
-# ict2206-crypto-secure-comms
+# ict2205-crypto-secure-comms
