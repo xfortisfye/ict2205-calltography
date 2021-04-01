@@ -1,0 +1,30 @@
+ifeq ($(OS),Windows_NT)
+	CC=python
+else
+	CC=python3
+endif
+
+PFLAGS=-3.8-64
+
+TARGET?=main
+SOURCES:=$(wildcard src/*.py)
+
+.PHONY: all check clean
+
+all:
+	$(CC) $(TARGET).py
+
+app:
+	$(CC) src/mainwindow.py
+
+check:
+	python -m py_compile $(SOURCES)
+
+clean:
+ifeq ($(OS),Windows_NT)
+	powershell "(Get-ChildItem * -Include *.pyc -Recurse | Remove-Item)"
+else
+	@echo "Cleaning up [.pyc] files..."
+	@sudo find . -type f -name "*.pyc" -delete
+	@echo "Cleaning complete!"
+endif
