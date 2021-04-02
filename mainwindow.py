@@ -1,3 +1,5 @@
+import os
+import shutil
 import sys
 from config import *
 import threading
@@ -10,7 +12,6 @@ class UiMainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         # call the inherited classes __init__ method
         super(UiMainWindow, self).__init__()
-        # Obfuscation.clear()
 
         # launch mainwindow.ui file
         uic.loadUi(f"{ABSOLUTE_PATH}/mainwindow.ui", self)
@@ -20,7 +21,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.setMaximumSize(QtCore.QSize(500, 800))
         
         self.start_intro_pg()
-        self.start_recv_call_pg()
+        #self.start_recv_call_pg()
 
         # sample
         self.display_contact_list.addItem("Alice")
@@ -152,6 +153,15 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.display_msg.setTextBackgroundColor(QtCore.Qt.white)
         self.display_msg.insertPlainText(message)
         self.display_msg.ensureCursorVisible()
+
+    '''
+    Misc Functions
+    '''
+    def shutdown():
+        # perform misc tasks 
+        if os.path.exists("__pycache__/"):
+            shutil.rmtree("__pycache__/")
+    
 
     '''
     Functions to Start / Stop the different pages
