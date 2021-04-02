@@ -3,7 +3,6 @@ from config import *
 import threading
 from PyQt5 import uic, QtWidgets, QtCore, QtGui
 from worker import Worker
-from keydialog import KeyDialog
 import time
 
 class UiMainWindow(QtWidgets.QMainWindow):
@@ -20,23 +19,208 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.setMinimumSize(QtCore.QSize(500, 800))
         self.setMaximumSize(QtCore.QSize(500, 800))
         
-        self.startMainPg(self.sw_page)
+        self.start_intro_pg()
+        self.start_recv_call_pg()
+
+        # sample
+        self.display_contact_list.addItem("Alice")
+        self.display_contact_list.addItem("Bob")
+
+    '''
+    Page 0/Intro Page's Functions 
+    '''
+
+    def set_init_nick(self):
+        if self.init_input_nick.text():
+            self.input_nickname.setText(self.init_input_nick.text())
+            self.current_nickname.setText(self.init_input_nick.text())
+            self.stop_intro_pg()
+
+            # update the server nickname
+        else: 
+            # print error dialog
+            pass
+            
+
+    '''
+    Page 1/Contact Page's Functions 
+    '''
+    def set_nickname(self):
+        if self.input_nickname.text():
+            self.current_nickname.setText(self.input_nickname.text())
+
+            # update server the nickname
+
+        else:
+            # print some error dialog
+            pass
+
+    def get_nickname(self):
+        return self.current_nickname.text()
+
+    def init_send_call(self):
+        if self.display_contact_list.currentItem() is None:
+            # display some error message for not selecting contact
+            return False
+        else:
+            self.send_call_text.setText("You are trying to call...\n" + self.display_contact_list.currentItem().text())
+            # start to gen RSA's stuff here and perform authentication
+            
+            # if succeeded, change to send call page
+            self.start_send_call_pg()
+            return True
+    
+    def init_receive_call(self):
+        # start to gen RSA's stuff here and perform authentication
+
+        # if succeeded, change to send call page
+        self.start_recv_call_pg()
+
+    '''
+    Page 2/Send Call Page's Functions 
+    '''
+    def stop_send_call(self):
+            # perform all the actions to process stop call
+
+            self.stop_send_call_pg()
+        
+    def refresh_contact_list(self):
+        self.display_contact_list.clear()
+
+        # retrieve contact list from server
+        
+        # sample
+        self.display_contact_list.addItem("Alice")
+        self.display_contact_list.addItem("Bob")
+        self.display_contact_list.addItem("Charlie")
+        self.display_contact_list.addItem("Delta")
+
+    '''
+    Page 3/Receive Call Page's Functions 
+    '''
+
+    def init_accept_call(self):
+        # perform all the actions to process accept call
+
+        # start generating ecdsa keys
 
 
+        self.start_chat_pg()
+
+    def init_reject_call(self):
+        # perform all the actions to process reject call
+
+        self.stop_recv_call_pg()
+
+    '''
+    Page 4/Chat Page's Functions 
+    '''
+    def init_end_call(self):
+        # perform all the actions to process end call during chat
+
+        self.stop_chat_pg()
+
+    def init_send_msg(self):
+        if self.input_msg.toPlainText():
+           message = self.input_msg.toPlainText()
+           self.input_msg.clear()
+           # process message
+
+           ####
+           self.display_send_msg(message)
+           
+        else:
+            pass
+
+    def display_send_msg(self, message):
+        self.display_msg.moveCursor(QtGui.QTextCursor.End)
+        self.display_msg.setTextColor(QtCore.Qt.red)
+        self.display_msg.setTextBackgroundColor(QtCore.Qt.black)
+        self.display_msg.append(self.get_nickname())
+        self.display_msg.setTextColor(QtCore.Qt.red)
+        self.display_msg.setTextBackgroundColor(QtCore.Qt.white)
+        self.display_msg.insertPlainText(message)
+        self.display_msg.ensureCursorVisible()
+
+    def display_recv_msg():
+        # get receiver name
+        self.display_msg.moveCursor(QtGui.QTextCursor.End)
+        self.display_msg.setTextColor(QtCore.Qt.red)
+        self.display_msg.setTextBackgroundColor(QtCore.Qt.black)
+        self.display_msg.append(self.get_nickname()) #adjust receiver's name
+        self.display_msg.setTextColor(QtCore.Qt.red)
+        self.display_msg.setTextBackgroundColor(QtCore.Qt.white)
+        self.display_msg.insertPlainText(message)
+        self.display_msg.ensureCursorVisible()
+
+    '''
+    Functions to Start / Stop the different pages
+    '''
+
+    def start_intro_pg(self):
+        self.init_set_nick_button.clicked.connect(lambda: self.set_init_nick())
+        self.change_page(0)
+
+    def stop_intro_pg(self):
+        self.init_set_nick_button.clicked.disconnect()
+        self.start_contact_pg()
+
+    def start_contact_pg(self):
+        self.set_nickname_button.clicked.connect(lambda: self.set_nickname())
+        self.start_call_button.clicked.connect(lambda: self.init_send_call())
+        self.refresh_button.clicked.connect(lambda: self.refresh_contact_list())
+        self.change_page(1)
+
+    def stop_contact_pg(self):
+        self.set_nickname_button.clicked.disconnect()
+        self.start_call_button.clicked.disconnect()
+        self.refresh_button.clicked.disconnect()
+
+    def start_send_call_pg(self):
+        self.stop_call_button.clicked.connect(lambda: self.stop_send_call())
+        self.change_page(2)
+    
+    def stop_send_call_pg(self):
+        self.stop_call_button.clicked.disconnect()
+        self.start_contact_pg()
+
+    def start_recv_call_pg(self):
+        self.accept_call_button.clicked.connect(lambda: self.init_accept_call())
+        self.reject_call_button.clicked.connect(lambda: self.init_reject_call())
+        self.recv_call_text.setText(self.get_nickname() + "\n is calling...") # change to Alice name
+        self.change_page(3)
+
+    def stop_recv_call_pg(self):
+        self.accept_call_button.clicked.disconnect()
+        self.reject_call_button.clicked.disconnect()
+        self.start_contact_pg()
+
+    def start_chat_pg(self):
+        self.end_call_button.clicked.connect(lambda: self.init_end_call())
+        self.send_msg_button.clicked.connect(lambda: self.init_send_msg())
+        self.change_page(4)
+
+    def stop_chat_pg(self):
+        self.end_call_button.clicked.disconnect()
+        self.send_msg_button.clicked.disconnect()
+        self.start_contact_pg()
+
+    def isSignalConnected(self, obj, name):
+        index = obj.metaObject().indexOfMethod(name)
+        if index > -1:
+            method = obj.metaObject().method(index)
+            if method:
+                return obj.isSignalConnected(method)
+        return False
+
+    def change_page(self, i):
+        self.sw_page.setCurrentIndex(i)
 
 
-        # keydialog = KeyDialog()
-
-        #     if keydialog.getKeyInfo() 
-
-        # # initialise gui functions
-        # self.import_apk_button.clicked.connect(lambda: self.importApkDialog())
-        # self.obf_package_button.setEnabled(False)
-        # self.obf_smali_button.setEnabled(False)
-        # self.export_apk_button.setEnabled(False)
-        # self.printLogs(SYSTEM, "Begin the program by decompiling your APK.")
-
-        # self.threadpool = QtCore.QThreadPool()
+    ########################
+    #Threading stuff
+    ##################
+           # self.threadpool = QtCore.QThreadPool()
 
     # def thread_complete(self, function, url, name):
     #     if function == "importApk":
@@ -59,68 +243,4 @@ class UiMainWindow(QtWidgets.QMainWindow):
     #     self.threadpool.start(worker)
 
     # def recurring_timer(self):
-    #     self.printLogs(LOADER, ".")
-
-    def setInitNick(self):
-        if not self.init_input_nick.text():
-            pass
-        else: 
-            self.input_nickname.setText(self.init_input_nick.text())
-            self.current_nickname.setText(self.init_input_nick.text())
-            self.stopMainPg(self.sw_page)
-
-    def setNickname(self):
-        if not self.input_nickname.text():
-            pass
-        else: 
-            self.current_nickname.setText(self.input_nickname.text())
-
-    def startMainPg(self, sw_page):
-        self.init_set_nick_button.clicked.connect(lambda: self.setInitNick())
-        self.changePage(sw_page, 0)
-
-    def stopMainPg(self, sw_page):
-        self.init_set_nick_button.clicked.disconnect()
-        self.startContactPg(self.sw_page)
-
-    def startContactPg(self, sw_page):
-        self.set_nickname_button.clicked.connect(lambda: self.setNickname())
-        self.start_call_button.clicked.connect(lambda: self.startCallPg(sw_page))
-        # self.refresh_button.clicked.connect(lambda: self.())
-        self.changePage(sw_page, 1)
-
-    def stopContactPg(self):
-        self.set_nickname_button.clicked.disconnect()
-        self.start_call_button.clicked.disconnect()
-        self.refresh_button.clicked.disconnect()
-
-    def startCallPg(self, sw_page):
-        self.accept_call_button.clicked.connect(lambda: self.startChatPg(sw_page))
-        self.reject_call_button.clicked.connect(lambda: self.stopCallPg(sw_page))
-        self.changePage(sw_page, 2)
-
-    def stopCallPg(self, sw_page):
-        self.accept_call_button.clicked.disconnect()
-        self.reject_call_button.clicked.disconnect()
-        self.startContactPg(sw_page)
-
-    def startChatPg(self, sw_page):
-        self.end_call_button.clicked.connect(lambda: self.stopChatPg(sw_page))
-        # self.send_msg_button.clicked.connect(lambda: self.stopChatPg(sw_page))
-        self.changePage(sw_page, 3)
-
-    def stopChatPg(self, sw_page):
-        self.end_call_button.clicked.disconnect()
-        # self.send_msg_button.clicked.disconnect()
-        self.startContactPg(sw_page)
-
-    def isSignalConnected(self, obj, name):
-        index = obj.metaObject().indexOfMethod(name)
-        if index > -1:
-            method = obj.metaObject().method(index)
-            if method:
-                return obj.isSignalConnected(method)
-        return False
-
-    def changePage(self, sw_page, i):
-        self.sw_page.setCurrentIndex(i)
+    #     self.printLogs(LOADER, ".")s

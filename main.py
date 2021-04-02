@@ -10,13 +10,13 @@ def main():
             shutil.rmtree("__pycache__/")
     
     
-    # # Launching the GUI
-    # app = QtWidgets.QApplication(sys.argv)
-    # # app.aboutToQuit.connect(lambda: Obfuscation.clear())
-    # mainwindow = UiMainWindow()
-    # mainwindow.setWindowTitle("Someone name this app plz")
-    # mainwindow.show()
-    # sys.exit(app.exec_())
+    # Launching the GUI
+    app = QtWidgets.QApplication(sys.argv)
+    # app.aboutToQuit.connect(lambda: Obfuscation.clear())
+    mainwindow = UiMainWindow()
+    mainwindow.setWindowTitle("Someone name this app plz")
+    mainwindow.show()
+    sys.exit(app.exec_())
 
 
 if __name__ == "__main__":
