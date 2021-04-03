@@ -115,9 +115,18 @@ class Server_socket:
 
     def wait_call_select(self):
         while True:
-            username_list = '{\n}'.join(online_users)
+            msg = self.recv_msg()
+            if self.server_client_enc:
 
-            response = "header: SE_AVAIL_USERS content: " + username_list + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
-            response = self.encrypt_content(response)
-            self.send_msg(response)
-            time.sleep(10)
+                msg = self.decrypt_content(msg)
+
+                if msg and msg_processor.get_header_field(msg) == "SE_AVAIL_USERS_REQ":
+
+                    username_list = '{\n}'.join(online_users)
+
+                    response = "header: SE_AVAIL_USERS content: " + username_list + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
+                    response = self.encrypt_content(response)
+                    self.send_msg(response)
+                    # return True
+
+

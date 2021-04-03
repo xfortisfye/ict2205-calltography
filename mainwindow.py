@@ -1,11 +1,13 @@
 import os
 import shutil
+import socket
 import sys
 from config import *
 import threading
 from PyQt5 import uic, QtWidgets, QtCore, QtGui
 from worker import Worker
 import time
+import client_class
 
 class UiMainWindow(QtWidgets.QMainWindow):
 
@@ -30,15 +32,56 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.display_contact_list.addItem("Alice")
         self.display_contact_list.addItem("Bob")
 
+        #socket stuff
+        self.client_obj = None
+        self.socket = None
+
+
     '''
     Page 0/Intro Page's Functions 
     '''
 
     def init_intro(self):
-        # gen of client's RSA Keys
-        # perform authentication with server
-        # send authentication okay to server
-        
+
+
+
+
+        #build socket
+        self.connect_server()
+
+        #get server connection msg
+        res = self.socket.recv(1024)
+
+        print(res.decode('utf-8'))
+        if res:
+            proceed = True
+
+            self.client_obj = client_class.Client(self.socket)
+
+            # send authentication okay to server
+            # perform authentication with server
+            # gen of client's RSA Keys
+            print("\n")
+            print("=================================")
+            print("Performing server authentication")
+            print("=================================")
+            if (self.client_obj.auth_server()):
+                print("Server authentication successful\n\n")
+            else:
+                proceed = False
+
+            # perform ecdh exchange
+            if proceed:
+                print("=================================")
+                print("Performing ECDH exchange")
+                print("=================================")
+                if (self.client_obj.exchange_ecdh()):
+                    print("ECDH exchange successful\n\n")
+
+        else:
+            #some error here
+            pass
+
         self.stop_intro_pg()
             
 
@@ -59,16 +102,20 @@ class UiMainWindow(QtWidgets.QMainWindow):
 
 
             # update server the nickname
-            print (self.get_nickname())
 
 
-            # get new contact list from server
+            if self.client_obj.set_username(self.get_nickname()):
 
-            # enable GUI upon completion
-            self.set_nickname_button.setEnabled(True)
-            self.display_contact_list.setEnabled(True)
-            self.start_call_button.setEnabled(True)
-            self.refresh_button.setEnabled(True)
+                # get new contact list from server
+                self.refresh_contact_list()
+
+                # enable GUI upon completion
+                self.display_contact_list.setEnabled(True)
+                self.start_call_button.setEnabled(True)
+                self.refresh_button.setEnabled(True)
+            else:
+                self.set_nickname_button.setEnabled(True)
+                self.display_contact_msg.setText("Nickname has been taken choose another one!")
         else:
             self.display_contact_msg.setText("No nickname has been set!")
 
@@ -105,12 +152,14 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.display_contact_list.clear()
 
         # retrieve contact list from server
-        
-        # sample
-        self.display_contact_list.addItem("Alice")
-        self.display_contact_list.addItem("Bob")
-        self.display_contact_list.addItem("Charlie")
-        self.display_contact_list.addItem("Delta")
+        online_users = self.client_obj.get_online_users()
+
+        if online_users:
+            for users in online_users:
+                self.display_contact_list.addItem(users)
+        else:
+            #some error here i guess
+            pass
 
     '''
     Page 3/Receive Call Page's Functions 
@@ -255,6 +304,22 @@ class UiMainWindow(QtWidgets.QMainWindow):
     def change_page(self, i):
         self.top_sw.setCurrentIndex(i)
         self.bot_sw.setCurrentIndex(i)
+
+
+    ########################
+    #Client Socket Stuff
+    ##################
+
+    def connect_server(self):
+        host = '127.0.0.1'
+        port = 8888
+
+        self.socket = socket.socket()
+        print('Waiting for connection response')
+        try:
+            self.socket.connect((host, port))
+        except socket.error as e:
+            print(str(e))
 
 
     ########################

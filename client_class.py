@@ -94,11 +94,10 @@ class Client:
             else:
                 return False
 
-    def set_username(self):
+    def set_username(self, username):
         if self.server_client_enc:
-            while True:
                 # send nickname to server
-                username = input("Enter Username: ")
+
                 response = "header: US_NICKNAME content: " + username + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
 
                 response = self.encrypt_content(response)
@@ -114,7 +113,29 @@ class Client:
                     if msg_processor.get_content_field(msg) == "ok":
                         return True
                     else:
-                        print("username taken pls try again")
+                        return False
+
+    def get_online_users(self):
+        if self.server_client_enc:
+                # get online users from server
+
+                response = "header: SE_AVAIL_USERS_REQ content: ok [EOM]"  # msg structure smt like header=purpose of msg
+                response = self.encrypt_content(response)
+
+                self.send_msg(response)
+
+                # receive response
+                msg = self.recv_msg()
+                msg = self.decrypt_content(msg)
+
+                # check if username is accepted by the server
+                if msg and msg_processor.get_header_field(msg) == "SE_AVAIL_USERS":
+                    avail_user_list = msg_processor.get_content_field(msg).split("{\n}")
+                    return avail_user_list
+                else:
+                    return None
+        else:
+            return None
 
     def idle(self):
         while True:

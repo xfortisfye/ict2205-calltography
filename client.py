@@ -3,62 +3,65 @@ import client_class
 
 
 
+def connect_to_server():
+    host = '127.0.0.1'
+    port = 8888
 
-host = '127.0.0.1'
-port = 8888
+    connection = socket.socket()
 
-connection = socket.socket()
+    print('Waiting for connection response')
 
+    try:
+        connection.connect((host, port))
+    except socket.error as e:
+        print(str(e))
 
-print('Waiting for connection response')
+    res = connection.recv(1024)
 
-try:
-    connection.connect((host, port))
-except socket.error as e:
-    print(str(e))
+    print(res.decode('utf-8'))
+    if res:
 
-res = connection.recv(1024)
+        proceed = True
 
-print(res.decode('utf-8'))
-if res:
-
-    proceed = True
-
-    client = client_class.Client(connection)
-    print("\n")
-    print("=================================")
-    print("Performing server authentication")
-    print("=================================")
-
-    if(client.auth_server()):
-        print("Server authentication successful\n\n")
-    else:
-        proceed = False
-
-
-
-    if proceed:
+        client = client_class.Client(connection)
+        print("\n")
         print("=================================")
-        print("Performing ECDH exchange")
+        print("Performing server authentication")
         print("=================================")
-        if(client.exchange_ecdh()):
-            print("ECDH exchange successful\n\n")
+
+        if(client.auth_server()):
+            print("Server authentication successful\n\n")
         else:
             proceed = False
 
+        if proceed:
+            print("=================================")
+            print("Performing ECDH exchange")
+            print("=================================")
+            if(client.exchange_ecdh()):
+                print("ECDH exchange successful\n\n")
+            else:
+                proceed = False
+    return client
 
 
-    if proceed:
-        print("=================================")
-        print("wait user enter username communication")
-        print("=================================")
-        if(client.set_username()):
-            print("Username successfully set\n\n")
-        else:
-            proceed = False
 
-    if proceed:
-        if(client.idle()):
-            print("waiting.....")
 
-connection.close()
+
+#     if proceed:
+#         print("=================================")
+#         print("wait user enter username communication")
+#         print("=================================")
+#         if(client.set_username()):
+#             print("Username successfully set\n\n")
+#         else:
+#             proceed = False
+#
+#     if proceed:
+#         if(client.idle()):
+#             print("waiting.....")
+#
+#
+#
+#
+# # connection.close()
