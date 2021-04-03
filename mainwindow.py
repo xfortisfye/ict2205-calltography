@@ -25,12 +25,11 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.setMaximumSize(QtCore.QSize(1280, 820))
         
         self.start_intro_pg()
-        firstLaunch = True
-        # self.start_recv_call_pg()
-
-        # sample
-        self.display_contact_list.addItem("Alice")
-        self.display_contact_list.addItem("Bob")
+        #self.start_recv_call_pg()
+        
+        # initialise threading
+        self.counter = None
+        self.threadpool = QtCore.QThreadPool()
 
         #socket stuff
         self.client_obj = None
@@ -42,113 +41,47 @@ class UiMainWindow(QtWidgets.QMainWindow):
     '''
 
     def init_intro(self):
+        self.init_intro_button.clicked.disconnect()
+        
+        self.timer = QtCore.QTimer()
+        self.timer.setInterval(1000)
+        self.counter = 1
+        self.timer.timeout.connect(self.init_loading_timer)
+        self.timer.start()
+        
+        worker = Worker(self.startServerAuth)
+        worker.signals.result.connect(self.serverAuthResult)
+        self.threadpool.start(worker)
 
-
-
-
-        #build socket
-        self.connect_server()
-
-        #get server connection msg
-        res = self.socket.recv(1024)
-
-        print(res.decode('utf-8'))
-        if res:
-            proceed = True
-
-            self.client_obj = client_class.Client(self.socket)
-
-            # send authentication okay to server
-            # perform authentication with server
-            # gen of client's RSA Keys
-            print("\n")
-            print("=================================")
-            print("Performing server authentication")
-            print("=================================")
-            if (self.client_obj.auth_server()):
-                print("Server authentication successful\n\n")
+    def set_nickname(self):
+        if self.input_nickname.text():
+            # set nickname
+            self.current_nickname.setText(self.input_nickname.text())
+            # update server the nickname
+            if self.client_obj.set_username(self.get_nickname()):
+                # get new contact list from server
+                self.refresh_contact_list()
+                # start contact page
+                self.stop_nick_pg()
             else:
-                proceed = False
-
-            # perform ecdh exchange
-            if proceed:
-                print("=================================")
-                print("Performing ECDH exchange")
-                print("=================================")
-                if (self.client_obj.exchange_ecdh()):
-                    print("ECDH exchange successful\n\n")
-
+                self.nick_error_msg.setStyleSheet("QLabel {color: red;}")
+                self.nick_error_msg.setText("Nickname has been taken, choose another one!")
         else:
-            #some error here
-            pass
+            self.nick_error_msg.setStyleSheet("QLabel {color: red;}")
+            self.nick_error_msg.setText("No nickname has been set!")
 
-        self.stop_intro_pg()
-            
+    def get_nickname(self):
+        return self.current_nickname.text()            
 
     '''
     Page 1/Contact Page's Functions 
     '''
-    def set_nickname(self):
-        if self.input_nickname.text():
-            # set nickname
-            self.display_contact_msg.setText("Hello,")
-            self.current_nickname.setText(self.input_nickname.text())
-            
-            # disable GUI to update server
-            self.set_nickname_button.setEnabled(False)
-            self.display_contact_list.setEnabled(False)
-            self.start_call_button.setEnabled(False)
-            self.refresh_button.setEnabled(False)
 
-
-            # update server the nickname
-
-
-            if self.client_obj.set_username(self.get_nickname()):
-
-                # get new contact list from server
-                self.refresh_contact_list()
-
-                # enable GUI upon completion
-                self.display_contact_list.setEnabled(True)
-                self.start_call_button.setEnabled(True)
-                self.refresh_button.setEnabled(True)
-            else:
-                self.set_nickname_button.setEnabled(True)
-                self.display_contact_msg.setText("Nickname has been taken choose another one!")
-        else:
-            self.display_contact_msg.setText("No nickname has been set!")
-
-    def get_nickname(self):
-        return self.current_nickname.text()
-
-    def init_send_call(self):
-        if self.display_contact_list.currentItem() is None:
-            # display some error message for not selecting contact
-            return False
-        else:
-            self.send_call_text.setText("You are calling...\n" + self.display_contact_list.currentItem().text())
-            # start to gen RSA's stuff here and perform authentication
-            
-            # if succeeded, change to send call page
-            self.start_send_call_pg()
-            return True
-    
-    def init_receive_call(self):
-        # start to gen RSA's stuff here and perform authentication
-
-        # if succeeded, change to send call page
-        self.start_recv_call_pg()
-
-    '''
-    Page 2/Send Call Page's Functions 
-    '''
-    def stop_send_call(self):
-            # perform all the actions to process stop call
-
-            self.stop_send_call_pg()
-        
     def refresh_contact_list(self):
+        # disable GUI to refresh contact list
+        self.display_contact_list.setEnabled(False)
+        self.start_call_button.setEnabled(False)
+        self.refresh_button.setEnabled(False)
         self.display_contact_list.clear()
 
         # retrieve contact list from server
@@ -157,9 +90,55 @@ class UiMainWindow(QtWidgets.QMainWindow):
         if online_users:
             for users in online_users:
                 self.display_contact_list.addItem(users)
+            
+            # enable GUI upon completion
+            self.display_contact_list.setEnabled(True)
+            self.start_call_button.setEnabled(True)
+            self.refresh_button.setEnabled(True)
         else:
-            #some error here i guess
+            self.contact_error_msg.setText("Failed to update contact list")
             pass
+
+    def init_send_call(self):
+        if self.display_contact_list.currentItem() is None:
+            self.contact_error_msg.setText("You have not chose any contact to call.")
+            return False
+        else:
+            self.send_call_text.setText("You are calling...\n" + self.display_contact_list.currentItem().text())
+        
+            # 1) send _NAME_CALL_ to Bob he is available
+
+            # 3) upon receive _NAME_RECV_, wait for server send Bob's IP
+    
+            # 4) send _CALL_REQ_
+
+            self.start_send_call_pg()
+            return True
+    
+    def init_receive_call(self):
+
+        # 2) send _NAME_RECV_ back to Alice
+
+        # 2.5) do we we want to receive Alice's IP for double checking <- can dont do
+
+        # 5) wait for _CALL_REQ_
+
+        # 6) if succeeded, change to send call page
+        self.start_recv_call_pg()
+
+    '''
+    Page 2/Send Call Page's Functions 
+    '''
+    def stop_send_call(self):
+            # Alice to send _CALL_END_ to Bob since she called wrongly
+
+            # perform all the actions to process stop call
+            self.stop_send_call_pg()
+
+    #####
+
+    # there needs to be a function of a listener to grab for _CALL_ACC_ by Alice to start gen ECDHE keys
+    #####
 
     '''
     Page 3/Receive Call Page's Functions 
@@ -168,6 +147,8 @@ class UiMainWindow(QtWidgets.QMainWindow):
     def init_accept_call(self):
         # perform all the actions to process accept call
 
+        # Bob to send _CALL_ACC_ to Alice since he okay to talk
+        
         # start generating ecdsa keys
 
 
@@ -176,6 +157,8 @@ class UiMainWindow(QtWidgets.QMainWindow):
     def init_reject_call(self):
         # perform all the actions to process reject call
 
+        # Bob to send _CALL_REJ_ to Alice since he lazy to talk
+
         self.stop_recv_call_pg()
 
     '''
@@ -183,6 +166,8 @@ class UiMainWindow(QtWidgets.QMainWindow):
     '''
     def init_end_call(self):
         # perform all the actions to process end call during chat
+        
+        # send _CALL_END_ 
 
         self.stop_chat_pg()
 
@@ -237,17 +222,22 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.change_page(0)
 
     def stop_intro_pg(self):
-        self.init_intro_button.clicked.disconnect()
+        self.start_nick_pg()
+
+    def start_nick_pg(self):
+        self.set_nick_button.clicked.connect(lambda: self.set_nickname())
+        self.bot_sw.setCurrentIndex(5)
+
+    def stop_nick_pg(self):
+        self.set_nick_button.clicked.disconnect()
         self.start_contact_pg()
 
     def start_contact_pg(self):
-        self.set_nickname_button.clicked.connect(lambda: self.set_nickname())
         self.start_call_button.clicked.connect(lambda: self.init_send_call())
         self.refresh_button.clicked.connect(lambda: self.refresh_contact_list())
         self.change_page(1)
 
     def stop_contact_pg(self):
-        self.set_nickname_button.clicked.disconnect()
         self.start_call_button.clicked.disconnect()
         self.refresh_button.clicked.disconnect()
 
@@ -325,27 +315,63 @@ class UiMainWindow(QtWidgets.QMainWindow):
     ########################
     #Threading stuff
     ##################
-           # self.threadpool = QtCore.QThreadPool()
 
-    # def thread_complete(self, function, url, name):
-    #     if function == "importApk":
-    #         self.timer.stop()
+    def startServerAuth(self):
+        #build socket
+        self.connect_server()
 
-    # def startImportThread(self, function, url, name):
-    #     # Pass the function to execute
-    #     if function == "importApk":
-    #         worker = Worker(Obfuscation.importFile, url)  # Any other args, kwargs are passed to the run function
-    #         worker.signals.finished.connect(lambda function=function, url=url, name=name: self.thread_complete(function, url, name))
+        #get server connection msg
+        res = self.socket.recv(1024)
 
-    #     # Execute
-    #     self.threadpool.start(worker)
+        print(res.decode('utf-8'))
+        if res:
+            proceed = True
 
-    # def startExportThread(self, function, url, name, key):
-    #     if function == "exportApk":
-    #         worker = Worker(Obfuscation.exportApk, url, name, key)  # Any other args, kwargs are passed to the run function
-    #         worker.signals.finished.connect(lambda function=function, url=url, name=name: self.thread_complete(function, url, name))
+            self.client_obj = client_class.Client(self.socket)
 
-    #     self.threadpool.start(worker)
+            # perform server authentication
+            print("\n")
+            print("=================================")
+            print("Performing server authentication")
+            print("=================================")
+            if (self.client_obj.auth_server()):
+                print("Server authentication successful\n\n")
+            else:
+                proceed = False
+                return "Server authentication failed"
 
-    # def recurring_timer(self):
-    #     self.printLogs(LOADER, ".")s
+            # perform ecdh exchange
+            if proceed:
+                print("=================================")
+                print("Performing ECDH exchange")
+                print("=================================")
+                if (self.client_obj.exchange_ecdh()):
+                    print("ECDH exchange successful\n\n")
+                    return None
+                else:
+                    return "ECDH exchange failed"
+        else:
+            return "Failed to connect to server"
+
+
+    def init_loading_timer(self):
+        self.init_error_msg.setStyleSheet("QLabel {color: black;}")
+
+        dot_string = ""
+        for _ in range(self.counter):
+            dot_string += "."
+        self.init_error_msg.setText("Loading " + dot_string)
+        self.counter += 1
+
+        if self.counter > 3:
+            self.counter = 1
+
+    def serverAuthResult(self, error):
+        self.timer.stop()
+        if error:
+            self.init_intro_button.clicked.connect(lambda: self.init_intro())
+            self.init_error_msg.setStyleSheet("QLabel {color: red;}")
+            self.init_error_msg.setText(error)
+        else:
+            self.stop_intro_pg()
+            
