@@ -17,10 +17,12 @@ class UiMainWindow(QtWidgets.QMainWindow):
         uic.loadUi(f"{ABSOLUTE_PATH}/mainwindow.ui", self)
 
         # set gui window size
-        self.setMinimumSize(QtCore.QSize(500, 800))
-        self.setMaximumSize(QtCore.QSize(500, 800))
+        self.setMinimumSize(QtCore.QSize(450, 700))
+        self.setMaximumSize(QtCore.QSize(450, 700))
+        self.display_contact_list.setStyleSheet("background-color: white")
         
         self.start_intro_pg()
+        firstLaunch = True
         #self.start_recv_call_pg()
 
         # sample
@@ -31,16 +33,12 @@ class UiMainWindow(QtWidgets.QMainWindow):
     Page 0/Intro Page's Functions 
     '''
 
-    def set_init_nick(self):
-        if self.init_input_nick.text():
-            self.input_nickname.setText(self.init_input_nick.text())
-            self.current_nickname.setText(self.init_input_nick.text())
-            self.stop_intro_pg()
-
-            # update the server nickname
-        else: 
-            # print error dialog
-            pass
+    def init_intro(self):
+        # gen of client's RSA Keys
+        # perform authentication with server
+        # send authentication okay to server
+        
+        self.stop_intro_pg()
             
 
     '''
@@ -48,13 +46,30 @@ class UiMainWindow(QtWidgets.QMainWindow):
     '''
     def set_nickname(self):
         if self.input_nickname.text():
+            # set nickname
+            self.display_contact_msg.setText("Hello,")
             self.current_nickname.setText(self.input_nickname.text())
+            
+            # disable GUI to update server
+            self.set_nickname_button.setEnabled(False)
+            self.display_contact_list.setEnabled(False)
+            self.start_call_button.setEnabled(False)
+            self.refresh_button.setEnabled(False)
+
 
             # update server the nickname
+            print (self.get_nickname())
 
+
+            # get new contact list from server
+
+            # enable GUI upon completion
+            self.set_nickname_button.setEnabled(True)
+            self.display_contact_list.setEnabled(True)
+            self.start_call_button.setEnabled(True)
+            self.refresh_button.setEnabled(True)
         else:
-            # print some error dialog
-            pass
+            self.display_contact_msg.setText("No nickname has been set!")
 
     def get_nickname(self):
         return self.current_nickname.text()
@@ -168,11 +183,11 @@ class UiMainWindow(QtWidgets.QMainWindow):
     '''
 
     def start_intro_pg(self):
-        self.init_set_nick_button.clicked.connect(lambda: self.set_init_nick())
+        self.init_intro_button.clicked.connect(lambda: self.init_intro())
         self.change_page(0)
 
     def stop_intro_pg(self):
-        self.init_set_nick_button.clicked.disconnect()
+        self.init_intro_button.clicked.disconnect()
         self.start_contact_pg()
 
     def start_contact_pg(self):
