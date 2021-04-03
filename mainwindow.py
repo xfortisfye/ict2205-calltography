@@ -17,13 +17,14 @@ class UiMainWindow(QtWidgets.QMainWindow):
         uic.loadUi(f"{ABSOLUTE_PATH}/mainwindow.ui", self)
 
         # set gui window size
-        self.setMinimumSize(QtCore.QSize(450, 700))
-        self.setMaximumSize(QtCore.QSize(450, 700))
-        self.display_contact_list.setStyleSheet("background-color: white")
+        # self.setMinimumSize(QtCore.QSize(450, 700))
+        # self.setMaximumSize(QtCore.QSize(450, 700))
+        self.setMinimumSize(QtCore.QSize(1280, 820))
+        self.setMaximumSize(QtCore.QSize(1280, 820))
         
         self.start_intro_pg()
         firstLaunch = True
-        #self.start_recv_call_pg()
+        # self.start_recv_call_pg()
 
         # sample
         self.display_contact_list.addItem("Alice")
@@ -79,7 +80,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
             # display some error message for not selecting contact
             return False
         else:
-            self.send_call_text.setText("You are trying to call...\n" + self.display_contact_list.currentItem().text())
+            self.send_call_text.setText("You are calling...\n" + self.display_contact_list.currentItem().text())
             # start to gen RSA's stuff here and perform authentication
             
             # if succeeded, change to send call page
@@ -221,14 +222,27 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.start_contact_pg()
 
     def start_chat_pg(self):
-        self.end_call_button.clicked.connect(lambda: self.init_end_call())
+        self.display_name.setEnabled(True)
+        self.display_msg.setEnabled(True)
+        self.input_msg.setEnabled(True)
+        self.send_msg_button.setEnabled(True)
+        self.mute_button.setEnabled(True)
         self.send_msg_button.clicked.connect(lambda: self.init_send_msg())
+        #self.mute_button.clicked.connect(lambda: self.init_send_msg())
+        self.end_call_button.clicked.connect(lambda: self.init_end_call())
         self.change_page(4)
 
     def stop_chat_pg(self):
-        self.end_call_button.clicked.disconnect()
+        self.display_name.setEnabled(False)
+        self.display_msg.setEnabled(False)
+        self.input_msg.setEnabled(False)
+        self.send_msg_button.setEnabled(False)
+        self.mute_button.setEnabled(False)
         self.send_msg_button.clicked.disconnect()
+        #self.mute_button.clicked.disconnect()
+        self.end_call_button.clicked.disconnect()
         self.start_contact_pg()
+        self.display_msg.clear()
 
     def isSignalConnected(self, obj, name):
         index = obj.metaObject().indexOfMethod(name)
@@ -239,7 +253,8 @@ class UiMainWindow(QtWidgets.QMainWindow):
         return False
 
     def change_page(self, i):
-        self.sw_page.setCurrentIndex(i)
+        self.top_sw.setCurrentIndex(i)
+        self.bot_sw.setCurrentIndex(i)
 
 
     ########################

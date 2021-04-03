@@ -1,7 +1,7 @@
 <RCC>
   <qresource prefix="/new/prefix1">
-    <file>img/recvcall.png</file>
     <file>img/sendcall.png</file>
+    <file>img/recvcall.png</file>
     <file>img/name.jpg</file>
     <file>img/refresh.png</file>
     <file>img/mic.png</file>
