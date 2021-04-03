@@ -1,6 +1,14 @@
 <RCC>
-    <qresource prefix="/new/prefix1">
-        <file>img/logo.png</file>
-        <file>img/grey-logo.png</file>
-    </qresource>
+  <qresource prefix="/new/prefix1">
+    <file>img/recvcall.png</file>
+    <file>img/sendcall.png</file>
+    <file>img/name.jpg</file>
+    <file>img/refresh.png</file>
+    <file>img/mic.png</file>
+    <file>img/send.png</file>
+    <file>img/endcall-01.png</file>
+    <file>img/acceptcall.png</file>
+    <file>img/rejectcall.png</file>
+    <file>img/start.png</file>
+  </qresource>
 </RCC>
