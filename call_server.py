@@ -42,7 +42,7 @@ def receiver(host, port):
     FORMAT = pyaudio.paInt16
     CHANNELS = 2
     RATE = 44100
-    BUFFER=1024
+    BUFFER=4096
     p = pyaudio.PyAudio()
     output_stream = p.open(format=FORMAT,
                                   output=True, rate=RATE, channels=CHANNELS,
@@ -75,7 +75,7 @@ def receiver(host, port):
                 end_counter = 0
                 print("here")
                 # keep collecting data until finding 8 x 00001111 or until end of packet
-                while end_counter < 8 and current_index < 1024:
+                while end_counter < 8 and current_index < 4096:
                     if data[current_index] == int('00001111', 2):
                         end_counter += 1
                     else:
