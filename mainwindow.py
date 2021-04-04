@@ -26,7 +26,8 @@ class UiMainWindow(QtWidgets.QMainWindow):
         
         # start gui at the intro page
         self.start_intro_pg()
-        self.start_recv_call_pg()
+
+        #self.start_recv_call_pg()
 
         # set up chat bubbles for messaging
         self.display_msg.setItemDelegate(MessageDelegate())
@@ -115,6 +116,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         online_users = self.client_obj.get_online_users()
 
         #start call_lister again
+        self.client_obj.listen_call_req_start()
         self.call_listener_thread = threading.Thread(target=self.client_obj.listen_call_req)
         self.call_listener_thread.start()
         #self.client_obj.listen_call_req_start()
@@ -141,11 +143,24 @@ class UiMainWindow(QtWidgets.QMainWindow):
             return False
         else:
             self.send_call_text.setText("You are calling...\n" + self.display_contact_list.currentItem().text())
-        
+
+            # pause call_lister to refresh contact list
+            self.client_obj.listen_call_req_pause()
+            self.call_listener_thread.join()
+
+
             # 1) send _NAME_CALL_ to Bob he is available
-            print(self.display_contact_list.currentItem().text())
+
+            # start call_lister again
+
+            self.client_obj.initiate_call_req(self.display_contact_list.currentItem().text())
+
             # 3) upon receive _NAME_RECV_, wait for server send Bob's IP
-    
+
+            #start call_listener
+            self.client_obj.listen_call_req_start()
+            self.call_listener_thread = threading.Thread(target=self.client_obj.listen_call_req)
+            self.call_listener_thread.start()
             # 4) send _CALL_REQ_
 
             self.start_send_call_pg()

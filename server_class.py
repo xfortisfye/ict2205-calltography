@@ -9,7 +9,7 @@ user_ip_dict = {}
 
 call_requests = {}
 call_requests_status = {}
-
+call_key_exchange = {}
 
 class Server_socket:
 
@@ -129,7 +129,6 @@ class Server_socket:
             if self.server_client_enc:
                 msg = self.recv_msg()
                 msg = self.decrypt_content(msg)
-                print("msg recieve")
                 if msg and msg_processor.get_header_field(msg) == "SE_AVAIL_USERS_REQ":
 
                     username_list = '{\n}'.join(online_users)
@@ -152,12 +151,40 @@ class Server_socket:
                         self.send_msg(response)
 
                         msg = self.recv_msg()
+                        msg = self.decrypt_content(msg)
+
 
                         if msg and msg_processor.get_header_field(msg) == "INC_CALL_REQ_RES":
                             call_response = msg_processor.get_content_field(msg)
-
+                            print("sending req")
                             if call_response == "ack":
                                 call_requests_status[self.username] = "ack"
+
+
+                                response = "header: CALLER_IP content: " + str(user_ip_dict[caller][0]) + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
+                                response = self.encrypt_content(response)
+                                self.send_msg(response)
+
+
+                                msg = self.recv_msg()
+                                msg = self.decrypt_content(msg)
+                                if msg and msg_processor.get_header_field(msg) == "CALL_PUB_KEY":
+                                    recipient_public_key = msg_processor.get_content_field(msg)
+                                    call_key_exchange[self.username]= recipient_public_key
+
+                                    while True:
+                                        if caller in call_key_exchange:
+                                            print(caller + " key is: " + call_key_exchange[caller])
+                                            call_target_key = call_key_exchange[caller]
+                                            call_key_exchange.pop(caller)
+                                            break
+
+                                    response = "header: CALL_PUB_KEY content: " + call_target_key + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
+                                    response = self.encrypt_content(response)
+                                    self.send_msg(response)
+
+
+
                             elif call_response == "dec":
                                 call_requests_status[self.username] = "dec"
 
@@ -169,8 +196,9 @@ class Server_socket:
 
 
                 #client wants to call someone
-                if msg and msg_processor.get_header_field(msg) == "CALL_REQ":
+                elif msg and msg_processor.get_header_field(msg) == "CALL_REQ":
                     call_target = msg_processor.get_content_field(msg)
+                    print("call request recieved")
                     if call_target in online_users:
                         call_requests_status[call_target]= "wait"
 
@@ -202,6 +230,33 @@ class Server_socket:
                             response = self.encrypt_content(response)
                             self.send_msg(response)
 
+                            response = "header: CALLER_IP content: " + str(user_ip_dict[call_target][0]) + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
+                            response = self.encrypt_content(response)
+                            self.send_msg(response)
+
+                            while True:
+                                if call_target in call_key_exchange:
+                                    print(call_target + " key is: " + call_key_exchange[call_target])
+                                    call_target_key = call_key_exchange[call_target]
+                                    call_key_exchange.pop(call_target)
+                                    break
+
+                            response = "header: CALL_PUB_KEY content: " + call_target_key + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
+                            response = self.encrypt_content(response)
+                            self.send_msg(response)
+
+
+                            msg = self.recv_msg()
+                            msg = self.decrypt_content(msg)
+                            if msg and msg_processor.get_header_field(msg) == "CALL_PUB_KEY":
+                                recipient_public_key = msg_processor.get_content_field(msg)
+                                call_key_exchange[self.username] = recipient_public_key
+
+
+
+
+
+
                         elif call_status == "waiting":
                             response = "header: CALL_REQ_RES content: timeout [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
                             response = self.encrypt_content(response)
@@ -213,26 +268,7 @@ class Server_socket:
                             self.send_msg(response)
 
 
-    def listen_call_req(self):
-        while True:
-            if call_requests[self.username] != False:
 
-                caller = call_requests[self.username]
 
-                response = "header: INC_CALL_REQ content: "+caller+" [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
 
-                response = self.encrypt_content(response)
-                self.send_msg(response)
-
-                msg = self.recv_msg()
-
-                if msg and msg_processor.get_header_field(msg) == "INC_CALL_REQ_RES":
-                    call_response = msg_processor.get_content_field(msg)
-
-                    if call_response == "ack":
-                        call_requests_status[self.username] = "ack"
-                    elif call_response == "dec":
-                        call_requests_status[self.username] = "dec"
-
-                call_requests[self.username] = False
 

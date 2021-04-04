@@ -3,7 +3,7 @@ from _thread import *
 import server_class
 online_users = []
 user_ip_dict = {}
-
+import threading
 
 
 
@@ -44,6 +44,10 @@ def multi_threaded_controller(connection):
             print("Client selected username\n\n")
         else:
             proceed = False
+
+    # listen_call_requests = threading.Thread(target=server.listen_call_req)
+    # listen_call_requests.start()
+
 
     if proceed:
         if(server.wait_call_select()):
