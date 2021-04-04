@@ -277,13 +277,6 @@
                </widget>
               </item>
               <item>
-               <widget class="QPushButton" name="pushButton">
-                <property name="text">
-                 <string>This button is for testing</string>
-                </property>
-               </widget>
-              </item>
-              <item>
                <layout class="QHBoxLayout" name="horizontalLayout_6">
                 <item>
                  <widget class="QPushButton" name="start_call_button">
@@ -612,8 +605,19 @@
             <height>40</height>
            </size>
           </property>
+          <property name="font">
+           <font>
+            <family>Tahoma</family>
+            <pointsize>15</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
           <property name="styleSheet">
            <string notr="true">QLineEdit {border: 3px solid black;border-radius: 10px;padding: 0 8px;background: #79caf9;} QLineEdit:disabled {background-color:#f0f0f0;}</string>
+          </property>
+          <property name="text">
+           <string/>
           </property>
           <property name="readOnly">
            <bool>true</bool>
@@ -623,7 +627,7 @@
         <item>
          <widget class="QListView" name="display_msg">
           <property name="enabled">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
           <property name="styleSheet">
            <string notr="true">QListView {border: 3px solid black;border-radius: 10px;padding: 0 8px;background-image: url(:/new/prefix1/img/np.png);} 

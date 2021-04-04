@@ -9,6 +9,7 @@ from PyQt5 import uic, QtWidgets, QtCore, QtGui
 from worker import Worker
 import time
 import client_class
+from msg_design import *
 
 class UiMainWindow(QtWidgets.QMainWindow):
 
@@ -20,13 +21,17 @@ class UiMainWindow(QtWidgets.QMainWindow):
         uic.loadUi(f"{ABSOLUTE_PATH}/mainwindow.ui", self)
 
         # set gui window size
-        # self.setMinimumSize(QtCore.QSize(450, 700))
-        # self.setMaximumSize(QtCore.QSize(450, 700))
         self.setMinimumSize(QtCore.QSize(1280, 820))
         self.setMaximumSize(QtCore.QSize(1280, 820))
         
+        # start gui at the intro page
         self.start_intro_pg()
-        #self.start_recv_call_pg()
+        self.start_recv_call_pg()
+
+        # set up chat bubbles for messaging
+        self.display_msg.setItemDelegate(MessageDelegate())
+        self.model = MessageModel()
+        self.display_msg.setModel(self.model)
         
         # initialise threading
         self.counter = None
@@ -37,6 +42,8 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.socket = None
 
         self.call_listener_thread = None
+
+        
 
 
     '''
@@ -103,8 +110,6 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.start_call_button.setEnabled(False)
         self.refresh_button.setEnabled(False)
         self.display_contact_list.clear()
-
-
 
         # retrieve contact list from server
         online_users = self.client_obj.get_online_users()
@@ -217,25 +222,11 @@ class UiMainWindow(QtWidgets.QMainWindow):
             pass
 
     def display_send_msg(self, message):
-        self.display_msg.moveCursor(QtGui.QTextCursor.End)
-        self.display_msg.setTextColor(QtCore.Qt.red)
-        self.display_msg.setTextBackgroundColor(QtCore.Qt.black)
-        self.display_msg.append(self.get_nickname())
-        self.display_msg.setTextColor(QtCore.Qt.red)
-        self.display_msg.setTextBackgroundColor(QtCore.Qt.white)
-        self.display_msg.insertPlainText(message)
-        self.display_msg.ensureCursorVisible()
+        self.model.add_message(USER_ME, message)
+        self.model.add_message(USER_THEM, message) # put for fun can delete
 
     def display_recv_msg():
-        # get receiver name
-        self.display_msg.moveCursor(QtGui.QTextCursor.End)
-        self.display_msg.setTextColor(QtCore.Qt.red)
-        self.display_msg.setTextBackgroundColor(QtCore.Qt.black)
-        self.display_msg.append(self.get_nickname()) #adjust receiver's name
-        self.display_msg.setTextColor(QtCore.Qt.red)
-        self.display_msg.setTextBackgroundColor(QtCore.Qt.white)
-        self.display_msg.insertPlainText(message)
-        self.display_msg.ensureCursorVisible()
+        self.model.add_message(USER_THEM, message)
 
     '''
     Misc Functions
@@ -313,16 +304,8 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.send_msg_button.clicked.disconnect()
         #self.mute_button.clicked.disconnect()
         self.end_call_button.clicked.disconnect()
+        self.model.clear()
         self.start_contact_pg()
-        self.display_msg.clear()
-
-    def isSignalConnected(self, obj, name):
-        index = obj.metaObject().indexOfMethod(name)
-        if index > -1:
-            method = obj.metaObject().method(index)
-            if method:
-                return obj.isSignalConnected(method)
-        return False
 
     def change_page(self, i):
         self.top_sw.setCurrentIndex(i)
