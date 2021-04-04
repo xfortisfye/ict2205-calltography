@@ -4,6 +4,7 @@ import socket
 import sys
 from config import *
 import threading
+
 from PyQt5 import uic, QtWidgets, QtCore, QtGui
 from worker import Worker
 import time
@@ -35,6 +36,8 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.client_obj = None
         self.socket = None
 
+        self.call_listener_thread = None
+
 
     '''
     Page 0/Intro Page's Functions 
@@ -59,10 +62,21 @@ class UiMainWindow(QtWidgets.QMainWindow):
             self.current_nickname.setText(self.input_nickname.text())
             # update server the nickname
             if self.client_obj.set_username(self.get_nickname()):
+
+                #start call listener thread
+
+                self.call_listener_thread = threading.Thread(target=self.client_obj.listen_call_req)
+                self.call_listener_thread.start()
+
                 # get new contact list from server
                 self.refresh_contact_list()
                 # start contact page
                 self.stop_nick_pg()
+
+
+
+
+
             else:
                 self.nick_error_msg.setStyleSheet("QLabel {color: red;}")
                 self.nick_error_msg.setText("Nickname has been taken, choose another one!")
@@ -78,14 +92,25 @@ class UiMainWindow(QtWidgets.QMainWindow):
     '''
 
     def refresh_contact_list(self):
+
+        # pause call_lister to refresh contact list
+        self.client_obj.listen_call_req_pause()
+
+
         # disable GUI to refresh contact list
         self.display_contact_list.setEnabled(False)
         self.start_call_button.setEnabled(False)
         self.refresh_button.setEnabled(False)
         self.display_contact_list.clear()
 
+
+
         # retrieve contact list from server
         online_users = self.client_obj.get_online_users()
+
+        #start call_lister again
+        self.client_obj.listen_call_req_start()
+
 
         if online_users:
             for users in online_users:
@@ -99,6 +124,9 @@ class UiMainWindow(QtWidgets.QMainWindow):
             self.contact_error_msg.setText("Failed to update contact list")
             pass
 
+
+
+
     def init_send_call(self):
         if self.display_contact_list.currentItem() is None:
             self.contact_error_msg.setText("You have not chose any contact to call.")
@@ -107,7 +135,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
             self.send_call_text.setText("You are calling...\n" + self.display_contact_list.currentItem().text())
         
             # 1) send _NAME_CALL_ to Bob he is available
-
+            print(self.display_contact_list.currentItem().text())
             # 3) upon receive _NAME_RECV_, wait for server send Bob's IP
     
             # 4) send _CALL_REQ_
@@ -118,6 +146,8 @@ class UiMainWindow(QtWidgets.QMainWindow):
     def init_receive_call(self):
 
         # 2) send _NAME_RECV_ back to Alice
+
+
 
         # 2.5) do we we want to receive Alice's IP for double checking <- can dont do
 

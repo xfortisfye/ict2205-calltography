@@ -1,6 +1,6 @@
 import msg_processor
 import cryptodriver
-
+import time
 
 class Client:
 
@@ -14,10 +14,13 @@ class Client:
         self.ip = self.socket.getsockname()[0]
         self.port = self.socket.getsockname()[1]
 
+        self.listen_call = True
+
     def send_msg(self, msg):
         self.socket.send(str.encode(msg))
 
     def recv_msg(self):
+        print("inrecv")
         return self.socket.recv(5120).decode('utf-8')
 
     def encrypt_content(self, data):
@@ -96,52 +99,92 @@ class Client:
 
     def set_username(self, username):
         if self.server_client_enc:
-                # send nickname to server
+            # send nickname to server
 
-                response = "header: US_NICKNAME content: " + username + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
+            response = "header: US_NICKNAME content: " + username + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
 
-                response = self.encrypt_content(response)
+            response = self.encrypt_content(response)
 
-                self.send_msg(response)
+            self.send_msg(response)
 
-                # receive response
-                msg = self.recv_msg()
-                msg = self.decrypt_content(msg)
-
-                # check if username is accepted by the server
-                if msg and msg_processor.get_header_field(msg) == "US_NICKNAME_STATUS":
-                    if msg_processor.get_content_field(msg) == "ok":
-                        return True
-                    else:
-                        return False
-
-    def get_online_users(self):
-        if self.server_client_enc:
-                # get online users from server
-
-                response = "header: SE_AVAIL_USERS_REQ content: ok [EOM]"  # msg structure smt like header=purpose of msg
-                response = self.encrypt_content(response)
-
-                self.send_msg(response)
-
-                # receive response
-                msg = self.recv_msg()
-                msg = self.decrypt_content(msg)
-
-                # check if username is accepted by the server
-                if msg and msg_processor.get_header_field(msg) == "SE_AVAIL_USERS":
-                    avail_user_list = msg_processor.get_content_field(msg).split("{\n}")
-                    return avail_user_list
-                else:
-                    return None
-        else:
-            return None
-
-    def idle(self):
-        while True:
+            # receive response
             msg = self.recv_msg()
             msg = self.decrypt_content(msg)
 
+            # check if username is accepted by the server
+            if msg and msg_processor.get_header_field(msg) == "US_NICKNAME_STATUS":
+                if msg_processor.get_content_field(msg) == "ok":
+                    return True
+                else:
+                    return False
+
+    def get_online_users(self):
+
+        if self.server_client_enc:
+            # get online users from server
+
+            response = "header: SE_AVAIL_USERS_REQ content: ok [EOM]"  # msg structure smt like header=purpose of msg
+            response = self.encrypt_content(response)
+
+            self.send_msg(response)
+
+            # receive response
+            msg = self.recv_msg()
+
+            msg = self.decrypt_content(msg)
+
+            # check if username is accepted by the server
             if msg and msg_processor.get_header_field(msg) == "SE_AVAIL_USERS":
                 avail_user_list = msg_processor.get_content_field(msg).split("{\n}")
-                print(avail_user_list)
+                return avail_user_list
+            else:
+                return None
+        else:
+            return None
+
+    def initiate_call_req(self):
+        pass
+
+    def listen_call_req(self):
+        while True:
+            msg=""
+            try:
+                print("listening...")
+                msg = self.recv_msg()
+                msg = self.decrypt_content(msg)
+
+            except:
+                print("paused listening...")
+
+            print("fasdf")
+            if msg and msg_processor.get_header_field(msg) == "INC_CALL_REQ":
+                caller = msg_processor.get_content_field(msg)
+                print(caller + " is trying to call you")
+                print("accepting call")
+
+                response = "header: INC_CALL_REQ_RES content: ack [EOM]"  # msg structure smt like header=purpose of msg
+                response = self.encrypt_content(response)
+
+                self.send_msg(response)
+
+
+            while not self.listen_call:
+
+                pass
+
+
+
+
+    def listen_call_req_start(self):
+        self.listen_call = True
+
+    def listen_call_req_pause(self):
+        self.listen_call = False
+
+        self.socket.setblocking(False)
+        time.sleep(1)
+        self.socket.setblocking(True)
+
+
+
+
