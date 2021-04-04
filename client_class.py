@@ -1,6 +1,10 @@
 import msg_processor
 import cryptodriver
 import time
+import select
+
+
+
 
 class Client:
 
@@ -20,7 +24,6 @@ class Client:
         self.socket.send(str.encode(msg))
 
     def recv_msg(self):
-        print("inrecv")
         return self.socket.recv(5120).decode('utf-8')
 
     def encrypt_content(self, data):
@@ -147,30 +150,33 @@ class Client:
 
     def listen_call_req(self):
         while True:
-            msg=""
-            try:
-                print("listening...")
-                msg = self.recv_msg()
-                msg = self.decrypt_content(msg)
 
-            except:
-                print("paused listening...")
+            print("listening...")
 
-            print("fasdf")
+            response = "header: CHECK_INC_CALL_REQ content: ok [EOM]"  # msg structure smt like header=purpose of msg
+            response = self.encrypt_content(response)
+
+            self.send_msg(response)
+
+            msg = self.recv_msg()
+            msg = self.decrypt_content(msg)
+
+            print("asdf...")
+
             if msg and msg_processor.get_header_field(msg) == "INC_CALL_REQ":
                 caller = msg_processor.get_content_field(msg)
-                print(caller + " is trying to call you")
-                print("accepting call")
+                if caller != "none":
+                    print(caller + " is trying to call you")
+                    print("accepting call")
 
-                response = "header: INC_CALL_REQ_RES content: ack [EOM]"  # msg structure smt like header=purpose of msg
-                response = self.encrypt_content(response)
+                    response = "header: INC_CALL_REQ_RES content: ack [EOM]"  # msg structure smt like header=purpose of msg
+                    response = self.encrypt_content(response)
 
-                self.send_msg(response)
+                    self.send_msg(response)
 
 
-            while not self.listen_call:
-
-                pass
+            if not self.listen_call:
+                break
 
 
 
@@ -181,9 +187,7 @@ class Client:
     def listen_call_req_pause(self):
         self.listen_call = False
 
-        self.socket.setblocking(False)
-        time.sleep(1)
-        self.socket.setblocking(True)
+
 
 
 

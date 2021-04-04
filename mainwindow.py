@@ -68,6 +68,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
                 self.call_listener_thread = threading.Thread(target=self.client_obj.listen_call_req)
                 self.call_listener_thread.start()
 
+                time.sleep(2)
                 # get new contact list from server
                 self.refresh_contact_list()
                 # start contact page
@@ -95,7 +96,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
 
         # pause call_lister to refresh contact list
         self.client_obj.listen_call_req_pause()
-
+        self.call_listener_thread.join()
 
         # disable GUI to refresh contact list
         self.display_contact_list.setEnabled(False)
@@ -109,7 +110,9 @@ class UiMainWindow(QtWidgets.QMainWindow):
         online_users = self.client_obj.get_online_users()
 
         #start call_lister again
-        self.client_obj.listen_call_req_start()
+        self.call_listener_thread = threading.Thread(target=self.client_obj.listen_call_req)
+        self.call_listener_thread.start()
+        #self.client_obj.listen_call_req_start()
 
 
         if online_users:
