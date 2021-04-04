@@ -8,7 +8,6 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
     app.aboutToQuit.connect(lambda: UiMainWindow.shutdown())
     mainwindow = UiMainWindow()
-    mainwindow.setWindowTitle("Someone name this app plz")
     mainwindow.show()
     sys.exit(app.exec_())
 
