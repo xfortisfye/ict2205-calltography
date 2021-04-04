@@ -197,7 +197,7 @@
            </size>
           </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="bot_init_page">
            <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -273,13 +273,6 @@
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="pushButton">
-                <property name="text">
-                 <string>This button is for testing</string>
                 </property>
                </widget>
               </item>
@@ -621,13 +614,24 @@
          </widget>
         </item>
         <item>
-         <widget class="QListView" name="display_msg">
+         <widget class="QTextEdit" name="display_msg">
           <property name="enabled">
-           <bool>true</bool>
+           <bool>false</bool>
+          </property>
+          <property name="font">
+           <font>
+            <family>Tahoma</family>
+           </font>
           </property>
           <property name="styleSheet">
-           <string notr="true">QListView {border: 3px solid black;border-radius: 10px;padding: 0 8px;background-image: url(:/new/prefix1/img/np.png);} 
-QListView:disabled {background-color:#f0f0f0;background-image: url(:/new/prefix1/img/grey.png); } </string>
+           <string notr="true">QTextEdit {border: 3px solid black;border-radius: 10px;padding: 0 8px;background-image: url(:/new/prefix1/img/np.png);} 
+QTextEdit:disabled {background-color:#f0f0f0;background-image: url(:/new/prefix1/img/grey.png); } </string>
+          </property>
+          <property name="verticalScrollBarPolicy">
+           <enum>Qt::ScrollBarAlwaysOff</enum>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
