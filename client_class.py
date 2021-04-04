@@ -179,6 +179,9 @@ class Client:
                 break
 
 
+            time.sleep(1)
+
+
 
 
     def listen_call_req_start(self):
