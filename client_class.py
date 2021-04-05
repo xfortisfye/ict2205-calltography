@@ -18,6 +18,8 @@ class Client:
 
         self.listen_call = True
 
+
+
     def send_msg(self, msg):
         self.socket.send(str.encode(msg))
 
@@ -143,3 +145,50 @@ class Client:
                 return None
         else:
             return None
+
+
+    def initiate_call_req(self, call_target):
+        print("calling....")
+
+        response = "header: CALL_REQ content: " + call_target + " [EOM]"  # msg structure smt like header=purpose of msg
+        response = self.encrypt_content(response)
+        self.send_msg(response)
+
+
+
+
+    def send_call_ack(self):
+        response = "header: INC_CALL_REQ_RES content: ack [EOM]"  # msg structure smt like header=purpose of msg
+        response = self.encrypt_content(response)
+
+        self.send_msg(response)
+
+        msg = self.recv_msg()
+        msg = self.decrypt_content(msg)
+
+        print(msg)
+        if msg and msg_processor.get_header_field(msg) == "CALLER_IP":
+            caller_ip = msg_processor.get_content_field(msg)
+            print(caller_ip)
+
+            key_obj = cryptodriver.make_dhe_key_obj()
+            own_public_key = cryptodriver.make_dhe_keypair(key_obj)
+
+            response = "header: CALL_PUB_KEY content: " + own_public_key + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
+            response = self.encrypt_content(response)
+            self.send_msg(response)
+
+            msg = self.recv_msg()
+            msg = self.decrypt_content(msg)
+            if msg_processor.get_header_field(msg) == "CALL_PUB_KEY":
+                recipient_public_key = msg_processor.get_content_field(msg)
+                shared_key = cryptodriver.make_dhe_sharedkey(key_obj, recipient_public_key)
+                print("Shared: key is: " + shared_key)
+        return None
+
+    def send_call_dec(self):
+        response = "header: INC_CALL_REQ_RES content: dec [EOM]"  # msg structure smt like header=purpose of msg
+        response = self.encrypt_content(response)
+
+        self.send_msg(response)
+        print("called declined")

@@ -48,38 +48,12 @@ class ListenCallReqWorker(QtCore.QThread):
                     self.signals.caller.emit(caller)
                     print(caller + " is trying to call you")
 
+                    #shift bottom to another function
                     # do smt
                     print("accepting call")
-
-                    response = "header: INC_CALL_REQ_RES content: ack [EOM]"  # msg structure smt like header=purpose of msg
-                    response = self.client.encrypt_content(response)
-
-                    self.client.send_msg(response)
-
-                    msg = self.client.recv_msg()
-                    msg = self.client.decrypt_content(msg)
+                    break
 
 
-                    print(msg)
-                    if msg and msg_processor.get_header_field(msg) == "CALLER_IP":
-                        caller_ip = msg_processor.get_content_field(msg)
-                        print(caller_ip)
-
-
-                        key_obj = cryptodriver.make_dhe_key_obj()
-                        own_public_key = cryptodriver.make_dhe_keypair(key_obj)
-
-
-                        response = "header: CALL_PUB_KEY content: " + own_public_key + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
-                        response = self.client.encrypt_content(response)
-                        self.client.send_msg(response)
-
-                        msg = self.client.recv_msg()
-                        msg = self.client.decrypt_content(msg)
-                        if msg_processor.get_header_field(msg) == "CALL_PUB_KEY":
-                            recipient_public_key = msg_processor.get_content_field(msg)
-                            shared_key = cryptodriver.make_dhe_sharedkey(key_obj, recipient_public_key)
-                            print("Shared: key is: " + shared_key)
 
             if not self.listen_call:
                 break

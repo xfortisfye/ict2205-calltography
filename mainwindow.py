@@ -4,6 +4,11 @@ import socket
 import sys
 from config import *
 import threading
+import queue
+from threading import Thread
+from PyQt5.QtCore import QObject, QThread, pyqtSignal
+
+
 
 from PyQt5 import uic, QtWidgets, QtCore, QtGui
 from worker import Worker
@@ -12,6 +17,12 @@ import client_class
 from msg_design import *
 from listen_call_req_worker import ListenCallReqWorker
 from init_call_req_worker import InitCallReqWorker
+
+
+
+
+
+
 
 class UiMainWindow(QtWidgets.QMainWindow):
 
@@ -149,27 +160,30 @@ class UiMainWindow(QtWidgets.QMainWindow):
             # store the receiver_name
             self.receiver_name = self.display_contact_list.currentItem().text()
 
-            # pause call_lister to refresh contact list
+
             self.client_obj = self.listen_call_req_work.retClient()
             self.listen_call_req_work.listen_call_req_pause()
             self.listen_call_req_work.wait()
 
-            # start sending call request
-            self.init_call_req_work = InitCallReqWorker(self.client_obj, self.receiver_name)
-            self.init_call_req_work.signals.finished.connect(self.init_call_send_timer)
-            self.init_call_req_work.start()
-            self.init_call_req_work.wait()
 
-            # listen for response
-            self.listen_call_req_work.insertClient(self.client_obj)
-            self.listen_call_req_work.listen_call_req_start()
-            self.listen_call_req_work = ListenCallReqWorker(self.client_obj)
-            self.listen_call_req_work.signals.caller.connect(self.init_call_recv_timer)
-            self.listen_call_req_work.start()
-            
+
+            #self.client_obj.initiate_call_req(self.receiver_name)
+
             # if succeeded, change to send call page
             self.stop_contact_pg()
             self.start_send_call_pg()
+
+            # start sending call request
+            self.init_call_req_work = InitCallReqWorker(self.client_obj, self.receiver_name)
+            self.init_call_send_timer(self.receiver_name)
+
+            self.init_call_req_work.signals.finished.connect(self.init_call_send_timer)
+            self.init_call_req_work.start()
+            #self.init_call_req_work.wait()
+
+
+            
+
             return True
     
     def init_receive_call(self):
@@ -177,7 +191,6 @@ class UiMainWindow(QtWidgets.QMainWindow):
         # listen for call response
 
         # send response back
-        
 
         # if succeeded, change to receive call page
         self.stop_contact_pg()
@@ -187,7 +200,14 @@ class UiMainWindow(QtWidgets.QMainWindow):
     Page 2/Send Call Page's Functions 
     '''
     def stop_send_call(self):
-            
+
+            #todo shift (listencall thread should pause when call has been accepting)
+            # listen for response
+            self.listen_call_req_work.insertClient(self.client_obj)
+            self.listen_call_req_work.listen_call_req_start()
+            self.listen_call_req_work = ListenCallReqWorker(self.client_obj)
+            self.listen_call_req_work.signals.caller.connect(self.init_call_recv_timer)
+            self.listen_call_req_work.start()
 
             # perform all the actions to process stop call
             self.stop_send_call_pg()
@@ -200,15 +220,25 @@ class UiMainWindow(QtWidgets.QMainWindow):
 
     def init_accept_call(self):
         # perform all the actions to process accept call
+        self.listen_call_req_work.wait()
+        #self.client_obj.send_call_ack()
+        thread = threading.Thread(target=self.client_obj.send_call_ack)
+        thread.start()
+
 
 
         self.start_chat_pg()
 
+
     def init_reject_call(self):
         # perform all the actions to process reject call
 
+        self.client_obj.send_call_dec()
 
         self.stop_recv_call_pg()
+
+
+
 
     '''
     Page 4/Chat Page's Functions 
@@ -273,8 +303,9 @@ class UiMainWindow(QtWidgets.QMainWindow):
 
     def stop_contact_pg(self):
         #reminder to andy to use this for send and recv.
-        self.start_call_button.clicked.disconnect()
-        self.refresh_button.clicked.disconnect()
+        #self.start_call_button.clicked.disconnect()
+        #self.refresh_button.clicked.disconnect()
+        pass
 
     def start_send_call_pg(self):
         self.stop_call_button.clicked.connect(lambda: self.stop_send_call())
@@ -289,12 +320,14 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.reject_call_button.clicked.connect(lambda: self.init_reject_call())
         self.change_page(3)
 
+
     def stop_recv_call_pg(self):
         self.accept_call_button.clicked.disconnect()
         self.reject_call_button.clicked.disconnect()
         self.start_contact_pg()
 
     def start_chat_pg(self):
+
         self.display_name.setEnabled(True)
         self.display_msg.setEnabled(True)
         self.input_msg.setEnabled(True)
@@ -426,6 +459,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
             self.counter = 1
     
     def print_call_recv(self, caller_name):
+        self.init_receive_call()
         dot_string = ""
         for _ in range(self.counter):
             dot_string += "."
@@ -434,4 +468,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
 
         if self.counter > 3:
             self.counter = 1
-            
+
+    def display_calling_screen(self):
+        self.stop_contact_pg()
+        self.start_send_call_pg()

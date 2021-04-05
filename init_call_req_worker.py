@@ -37,41 +37,55 @@ class InitCallReqWorker(QtCore.QThread):
             response = self.client.encrypt_content(response)
             self.client.send_msg(response)
 
-            msg = self.client.recv_msg()
-            msg = self.client.decrypt_content(msg)
 
-            if msg and msg_processor.get_header_field(msg) == "CALL_REQ_RES":
-                response = msg_processor.get_content_field(msg)
-                if response == "ack":
-
-                    msg = self.client.recv_msg()
-                    msg = self.client.decrypt_content(msg)
-
-                    if msg and msg_processor.get_header_field(msg) == "CALLER_IP":
-                        caller_ip = msg_processor.get_content_field(msg)
-                        print(caller_ip)
-
-                        key_obj = cryptodriver.make_dhe_key_obj()
-                        own_public_key = cryptodriver.make_dhe_keypair(key_obj)
-
+            while True:
+                msg = self.client.recv_msg()
+                msg = self.client.decrypt_content(msg)
+                if msg and msg_processor.get_header_field(msg) == "CALL_REQ_RES":
+                    response = msg_processor.get_content_field(msg)
+                    if response == "ack":
+                        print("ack")
                         msg = self.client.recv_msg()
                         msg = self.client.decrypt_content(msg)
-                        print(msg)
-                        if msg_processor.get_header_field(msg) == "CALL_PUB_KEY":
-                            recipient_public_key = msg_processor.get_content_field(msg)
+
+                        if msg and msg_processor.get_header_field(msg) == "CALLER_IP":
+                            caller_ip = msg_processor.get_content_field(msg)
+                            print(caller_ip)
+
                             key_obj = cryptodriver.make_dhe_key_obj()
                             own_public_key = cryptodriver.make_dhe_keypair(key_obj)
-                            response = "header: CALL_PUB_KEY content: " + own_public_key + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
-                            response = self.client.encrypt_content(response)
-                            self.client.send_msg(response)
-                            shared_key = cryptodriver.make_dhe_sharedkey(key_obj, recipient_public_key)
-                            print("Shared: key is: "+shared_key)   
+
+                            msg = self.client.recv_msg()
+                            msg = self.client.decrypt_content(msg)
+                            print(msg)
+                            if msg_processor.get_header_field(msg) == "CALL_PUB_KEY":
+                                recipient_public_key = msg_processor.get_content_field(msg)
+                                key_obj = cryptodriver.make_dhe_key_obj()
+                                own_public_key = cryptodriver.make_dhe_keypair(key_obj)
+                                response = "header: CALL_PUB_KEY content: " + own_public_key + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
+                                response = self.client.encrypt_content(response)
+                                self.client.send_msg(response)
+                                shared_key = cryptodriver.make_dhe_sharedkey(key_obj, recipient_public_key)
+                                print("Shared: key is: "+shared_key)
+
+                    if response == "dec":
+                        print("dec")
+                        pass
+                    if response == "waiting":
+                        print("waiting")
+                        pass
+                    if response == "timeout":
+                        print("timeout")
+                        pass
         except:
             traceback.print_exc()
             exctype, value = sys.exc_info()[:2]
             self.signals.error.emit((exctype, value, traceback.format_exc()))
+
         else:
             self.signals.result.emit(self.call_target)  # Return the result of the processing
+
+
         finally:
             self.signals.finished.emit(self.call_target)          
 
