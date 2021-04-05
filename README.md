@@ -43,13 +43,12 @@ If above doesn't work, uninstall the following and try again.
 > pip install wheel
 > pip install PyAudio
 ```
-4. Install [codecs](https://files3.codecguide.com/K-Lite_Codec_Pack_1610_Full.exe)
-
 If above doesn't work, [Install](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio) your respective wheel version to `\Path\to\ict2205-crypto-secure-comms`
 Checking of python version: `> python`
 ```bash
 > pip install PyAudio-0.2.11-cp39-cp39-win_amd64.whl
 ```
+4. Install [codecs](https://files3.codecguide.com/K-Lite_Codec_Pack_1610_Full.exe)
 
 #### Setting up GNU Make (Optional)
 1. [Install](https://sourceforge.net/projects/gnuwin32/files/make/3.81/make-3.81.exe/download?use_mirror=nchc&download=) Make for Windows
