@@ -14,6 +14,7 @@ class WorkerSignals(QtCore.QObject):
     error = QtCore.pyqtSignal(tuple)
     result = QtCore.pyqtSignal(object)
     call_accepted = QtCore.pyqtSignal()
+    start_timer = QtCore.pyqtSignal()
 
 
 class InitRequestWorker(QtCore.QThread):
@@ -37,6 +38,8 @@ class InitRequestWorker(QtCore.QThread):
             response = "header: CALL_REQ content: " + self.call_target + " [EOM]"  # msg structure smt like header=purpose of msg
             response = self.client.encrypt_content(response)
             self.client.send_msg(response)
+
+            self.signals.start_timer.emit()
 
             while True:
                 msg = self.client.recv_msg()
@@ -74,7 +77,7 @@ class InitRequestWorker(QtCore.QThread):
                         break
                     if response == "waiting":
                         print("waiting")
-                        break
+
                     if response == "timeout":
                         print("timeout")
                         break

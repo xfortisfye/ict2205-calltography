@@ -171,23 +171,22 @@ class UiMainWindow(QtWidgets.QMainWindow):
 
             # start sending call request
             self.init_req_thread = InitRequestWorker(self.client_obj, self.receiver_name)
-            self.init_req_thread.signals.finished.connect(self.init_send_timer)
+            self.init_req_thread.signals.start_timer.connect(self.init_send_timer)
             self.init_req_thread.signals.call_accepted.connect(self.init_call_accepted)
-            self.init_req_thread.start()
-            self.init_req_thread.wait()        
+            self.init_req_thread.start()       
 
     '''
     Page 2/Send Call Page's Functions 
     '''
 
-    def init_send_timer(self, caller):
+    def init_send_timer(self):
         self.send_timer = QtCore.QTimer()
         self.send_timer.setInterval(1000)
         self.counter = 1
-        self.send_timer.timeout.connect(lambda caller=caller: self.print_send_timer(caller))
+        self.send_timer.timeout.connect(self.print_send_timer)
         self.send_timer.start()
 
-    def print_send_timer(self, caller):
+    def print_send_timer(self):
         dot_string = ""
         for _ in range(self.counter):
             dot_string += "."
@@ -197,12 +196,9 @@ class UiMainWindow(QtWidgets.QMainWindow):
         if self.counter > 3:
             self.counter = 1
 
-    def init_call_accepted(self): #andy
-        
-        print ("helloooo")
+    def init_call_accepted(self):
+        self.init_req_thread.wait()
         self.send_timer.stop()
-        self.init_req_thread.exit()
-        print ("hello")
         self.start_chat_pg()
 
     def stop_send_call(self):
@@ -214,10 +210,9 @@ class UiMainWindow(QtWidgets.QMainWindow):
     '''
 
     def init_receive_call(self, caller_name):
-        #andy
         self.client_obj = self.listen_req_thread.retClient()
         self.listen_req_thread.listen_call_req_pause()
-        self.listen_req_thread.exit()
+        self.listen_req_thread.wait()
 
         self.stop_contact_pg()
         self.start_recv_call_pg()
@@ -232,25 +227,17 @@ class UiMainWindow(QtWidgets.QMainWindow):
     def init_accept_call(self):
         # perform all the actions to process accept call
         self.receive_timer.stop()
-        print("hey")
         self.send_ack_thread = SendAckWorker(self.client_obj)
         self.send_ack_thread.signals.call_accepted.connect(self.post_accept_call)
-        print("what2")
         self.send_ack_thread.start()
-        print("what1")
-        #self.client_obj.send_call_ack()
-        print("what")
-        # thread = threading.Thread(target=self.client_obj.send_call_ack)
-        # thread.start()
+        self.send_ack_thread.wait()
 
     def post_accept_call(self):
-        print("wow it ended")
         self.send_ack_thread.exit()
         self.start_chat_pg()
         
     def init_reject_call(self):
         # perform all the actions to process reject call
-
         self.client_obj.send_call_dec()
         self.stop_recv_call_pg()
 
