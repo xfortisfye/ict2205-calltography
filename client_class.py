@@ -21,8 +21,16 @@ class Client:
     def send_msg(self, msg):
         self.socket.send(str.encode(msg))
 
+    def send_enc_msg(self, msg):
+        msg = self.encrypt_content(msg)
+        self.send_msg(msg)
+
     def recv_msg(self):
         return self.socket.recv(5120).decode('utf-8')
+
+    def recv_enc_msg(self):
+        msg = self.recv_msg()
+        return self.decrypt_content(msg)
 
     def encrypt_content(self, data):
         return cryptodriver.encrypt_aes_gcm(self.client_server_aes_key, data)
@@ -104,13 +112,10 @@ class Client:
 
             response = "header: US_NICKNAME content: " + username + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
 
-            response = self.encrypt_content(response)
-
-            self.send_msg(response)
+            self.send_enc_msg(response)
 
             # receive response
-            msg = self.recv_msg()
-            msg = self.decrypt_content(msg)
+            msg = self.recv_enc_msg()
 
             # check if username is accepted by the server
             if msg and msg_processor.get_header_field(msg) == "US_NICKNAME_STATUS":
@@ -125,14 +130,10 @@ class Client:
             # get online users from server
 
             response = "header: SE_AVAIL_USERS_REQ content: ok [EOM]"  # msg structure smt like header=purpose of msg
-            response = self.encrypt_content(response)
-
-            self.send_msg(response)
+            self.send_enc_msg(response)
 
             # receive response
-            msg = self.recv_msg()
-
-            msg = self.decrypt_content(msg)
+            msg = self.recv_enc_msg()
 
             # check if username is accepted by the server
             if msg and msg_processor.get_header_field(msg) == "SE_AVAIL_USERS":

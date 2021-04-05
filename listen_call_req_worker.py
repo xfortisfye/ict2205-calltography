@@ -93,16 +93,10 @@ class ListenCallReqWorker(QtCore.QThread):
     def listen_call_req_pause(self):
         self.listen_call = False
 
+    # return client object
     def retClient(self):
         return self.client
 
+    # insert client object
     def insertClient(self, client):
         self.client = client
-
-    def isSignalConnected(self, obj, name):
-        index = obj.metaObject().indexOfMethod(name)
-        if index > -1:
-            method = obj.metaObject().method(index)
-            if method:
-                return obj.isSignalConnected(method)
-        return False
