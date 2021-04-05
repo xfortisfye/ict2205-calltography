@@ -31,6 +31,10 @@
   <property name="windowTitle">
    <string>Calltography</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="resources.qrc">
+    <normaloff>:/new/prefix1/img/keyicon.png</normaloff>:/new/prefix1/img/keyicon.png</iconset>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_12">
     <item>
@@ -58,9 +62,15 @@
            </size>
           </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>4</number>
           </property>
-          <widget class="QWidget" name="top_init_page"/>
+          <widget class="QWidget" name="top_init_page">
+           <layout class="QVBoxLayout" name="verticalLayout_14">
+            <item>
+             <widget class="QVideoWidget" name="intro_vw" native="true"/>
+            </item>
+           </layout>
+          </widget>
           <widget class="QWidget" name="top_contact_page">
            <layout class="QVBoxLayout" name="verticalLayout_5">
             <item>
@@ -173,7 +183,30 @@
             </item>
            </layout>
           </widget>
-          <widget class="QWidget" name="top_chat_page"/>
+          <widget class="QWidget" name="top_chat_page">
+           <layout class="QVBoxLayout" name="verticalLayout_16">
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_15">
+              <item>
+               <widget class="QPushButton" name="still_button">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">border-image: url(:/new/prefix1/img/still-logo.png);</string>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
          </widget>
         </item>
         <item>
@@ -766,6 +799,14 @@ QListView:disabled {background-color:#f0f0f0;background-image: url(:/new/prefix1
    </layout>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QVideoWidget</class>
+   <extends>QWidget</extends>
+   <header>PyQt5.QtMultimediaWidgets</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="resources.qrc"/>
  </resources>
