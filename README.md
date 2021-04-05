@@ -43,6 +43,7 @@ If above doesn't work, uninstall the following and try again.
 > pip install wheel
 > pip install PyAudio
 ```
+4. Install [codecs](https://files3.codecguide.com/K-Lite_Codec_Pack_1610_Full.exe)
 
 If above doesn't work, [Install](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio) your respective wheel version to `\Path\to\ict2205-crypto-secure-comms`
 Checking of python version: `> python`
