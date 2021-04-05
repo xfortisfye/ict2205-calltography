@@ -62,7 +62,7 @@
            </size>
           </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="top_init_page">
            <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -177,6 +177,9 @@
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
                 </property>
+                <property name="wordWrap">
+                 <bool>true</bool>
+                </property>
                </widget>
               </item>
              </layout>
@@ -230,7 +233,7 @@
            </size>
           </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>5</number>
           </property>
           <widget class="QWidget" name="bot_init_page">
            <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -540,6 +543,9 @@
                 </property>
                 <property name="styleSheet">
                  <string notr="true">QLineEdit {border: 3px solid black;border-radius: 10px;padding: 0 8px;background: #f1e65a;} QLineEdit:disabled {background-color:#656462;}</string>
+                </property>
+                <property name="maxLength">
+                 <number>10</number>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>

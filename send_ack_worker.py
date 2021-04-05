@@ -13,7 +13,7 @@ class WorkerSignals(QtCore.QObject):
     finished = QtCore.pyqtSignal()
     error = QtCore.pyqtSignal(tuple)
     result = QtCore.pyqtSignal()
-    call_accepted = QtCore.pyqtSignal()
+    call_accepted = QtCore.pyqtSignal(str, str)
 
 
 class SendAckWorker(QtCore.QThread):
@@ -52,12 +52,12 @@ class SendAckWorker(QtCore.QThread):
 
                 msg = self.client.recv_msg()
                 msg = self.client.decrypt_content(msg)
-                print ("Testsets " + msg)
+                
                 if msg_processor.get_header_field(msg) == "CALL_PUB_KEY":
                     recipient_public_key = msg_processor.get_content_field(msg)
                     shared_key = cryptodriver.make_dhe_sharedkey(key_obj, recipient_public_key)
                     print("Shared: key is: " + shared_key)
-                    self.signals.call_accepted.emit()
+                    self.signals.call_accepted.emit(shared_key, caller_ip)
         except:
             traceback.print_exc()
             exctype, value = sys.exc_info()[:2]

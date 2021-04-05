@@ -13,8 +13,8 @@ class WorkerSignals(QtCore.QObject):
     finished = QtCore.pyqtSignal(str)
     error = QtCore.pyqtSignal(tuple)
     result = QtCore.pyqtSignal(object)
-    call_accepted = QtCore.pyqtSignal()
     start_timer = QtCore.pyqtSignal()
+    call_accepted = QtCore.pyqtSignal(str, str)
 
 
 class InitRequestWorker(QtCore.QThread):
@@ -69,7 +69,7 @@ class InitRequestWorker(QtCore.QThread):
                                 response = self.client.encrypt_content(response)
                                 self.client.send_msg(response)
                                 shared_key = cryptodriver.make_dhe_sharedkey(key_obj, recipient_public_key)
-                                self.signals.call_accepted.emit()
+                                self.signals.call_accepted.emit(shared_key, caller_ip)
                                 print("Shared: key is: "+shared_key)
                                 break
                     if response == "dec":

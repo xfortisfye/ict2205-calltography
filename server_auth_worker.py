@@ -11,9 +11,9 @@ class WorkerSignals(QtCore.QObject):
     progress = QtCore.pyqtSignal(int)
 
 
-class Worker(QtCore.QRunnable):
+class ServerAuthWorker(QtCore.QThread):
     def __init__(self, fn, *args, **kwargs):
-        super(Worker, self).__init__()
+        super(ServerAuthWorker, self).__init__()
 
         # Store constructor arguments (re-used for processing)
         self.fn = fn
