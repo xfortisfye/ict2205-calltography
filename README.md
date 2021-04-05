@@ -61,7 +61,7 @@ Checking of python version: `> python`
 ### Option 1: Using GNU Make
 1. To run the program
 ```bash
-> cd \Path\to\ict2207-mob-sec-obfuscation
+> cd \Path\to\ict2205-crypto-secure-comms
 > make
 ```
 2. To clean compiled files (.pyc)
