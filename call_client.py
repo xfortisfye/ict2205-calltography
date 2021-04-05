@@ -16,6 +16,7 @@ key_counter = 0
 
 end_counter = 0
 
+
 ##### Get the bits to OR or AND with the data #####
 def get_bitwise_data(value, position):
     if value==0:
@@ -120,12 +121,8 @@ if __name__ == '__main__':
         message = str(input())
         message_binary = bin(int.from_bytes(bytes(message, 'utf-8'), byteorder='little'))[2:]
 
-
-        print(int(len(message_binary) / 8))
-
         if len(message_binary) % 8 != 0:
             for i in range(8-(len(message_binary) % 8)):
                 message_binary = "0"+message_binary
-        print(message_binary)
-        encode_data = True
 
+        encode_data = True

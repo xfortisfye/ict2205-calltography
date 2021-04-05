@@ -56,6 +56,7 @@ def receiver(host, port):
             output_stream.write(data)
             current_index = 0
 
+
             # Not currently collecting data then...
             if not collecting_data:
 
@@ -72,11 +73,11 @@ def receiver(host, port):
 
             # if collecting data
             if collecting_data:
-                end_counter = 0
-                print("here")
+
                 # keep collecting data until finding 8 x 00001111 or until end of packet
                 while end_counter < 8 and current_index < 4096:
                     if data[current_index] == int('00001111', 2):
+                        message_bytes += bytes({data[current_index]})
                         end_counter += 1
                     else:
                         message_bytes += bytes({data[current_index]})
@@ -96,14 +97,14 @@ def receiver(host, port):
                     for i in range(8 - len(bin_str)):
                         bin_str = "0" + bin_str
 
+
                     message_bin += bin_str[key[key_counter] + 2]
                     key_counter = (key_counter + 1) % len(key)
 
                 # Convert string binary to string
                 message = ""
-                print(message_bin)
+                message_bin = message_bin[:-8]
                 for i in range(0, len(message_bin), 8):
-                    print(bytes({int(message_bin[i:i + 8], 2)}).decode("utf-8"))
                     message = bytes({int(message_bin[i:i + 8], 2)}).decode("utf-8") + message
 
                 # print
