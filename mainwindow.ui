@@ -62,7 +62,7 @@
            </size>
           </property>
           <property name="currentIndex">
-           <number>4</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="top_init_page">
            <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -306,13 +306,6 @@
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="pushButton">
-                <property name="text">
-                 <string>testing butttton</string>
                 </property>
                </widget>
               </item>

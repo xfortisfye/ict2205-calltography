@@ -9,15 +9,13 @@ import time
 import select
 
 class WorkerSignals(QtCore.QObject):
-    finished = QtCore.pyqtSignal()
-    error = QtCore.pyqtSignal(tuple)
-    result = QtCore.pyqtSignal(object)
     caller = QtCore.pyqtSignal(str)
+    init_recv_call = QtCore.pyqtSignal()
 
 
-class ListenCallReqWorker(QtCore.QThread):
+class ListenRequestWorker(QtCore.QThread):
     def __init__(self, client):
-        super(ListenCallReqWorker, self).__init__()
+        super(ListenRequestWorker, self).__init__()
 
         # Store constructor arguments (re-used for processing)
         self.signals = WorkerSignals()
@@ -46,6 +44,7 @@ class ListenCallReqWorker(QtCore.QThread):
                 caller = msg_processor.get_content_field(msg)
                 if caller != "none":
                     self.signals.caller.emit(caller)
+                    self.signals.init_recv_call.emit()
                     print(caller + " is trying to call you")
 
                     #shift bottom to another function

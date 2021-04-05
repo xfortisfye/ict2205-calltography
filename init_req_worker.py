@@ -13,11 +13,12 @@ class WorkerSignals(QtCore.QObject):
     finished = QtCore.pyqtSignal(str)
     error = QtCore.pyqtSignal(tuple)
     result = QtCore.pyqtSignal(object)
+    call_accepted = QtCore.pyqtSignal()
 
 
-class InitCallReqWorker(QtCore.QThread):
+class InitRequestWorker(QtCore.QThread):
     def __init__(self, client, call_target):
-        super(InitCallReqWorker, self).__init__()
+        super(InitRequestWorker, self).__init__()
 
         # Store constructor arguments (re-used for processing)
         self.signals = WorkerSignals()
@@ -36,7 +37,6 @@ class InitCallReqWorker(QtCore.QThread):
             response = "header: CALL_REQ content: " + self.call_target + " [EOM]"  # msg structure smt like header=purpose of msg
             response = self.client.encrypt_content(response)
             self.client.send_msg(response)
-
 
             while True:
                 msg = self.client.recv_msg()
@@ -66,17 +66,18 @@ class InitCallReqWorker(QtCore.QThread):
                                 response = self.client.encrypt_content(response)
                                 self.client.send_msg(response)
                                 shared_key = cryptodriver.make_dhe_sharedkey(key_obj, recipient_public_key)
+                                self.signals.call_accepted.emit()
                                 print("Shared: key is: "+shared_key)
-
+                                break
                     if response == "dec":
                         print("dec")
-                        pass
+                        break
                     if response == "waiting":
                         print("waiting")
-                        pass
+                        break
                     if response == "timeout":
                         print("timeout")
-                        pass
+                        break
         except:
             traceback.print_exc()
             exctype, value = sys.exc_info()[:2]

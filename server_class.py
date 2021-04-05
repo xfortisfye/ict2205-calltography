@@ -256,6 +256,7 @@ class Server_socket:
         # =============== EXCHANGE ECDH =============== #
         # get user response
         msg = self.recv_enc_msg()
+        print("Client manage to send the message: " + msg)
 
         # checks if msg is for public key exchange
         if msg and msg_processor.get_header_field(msg) == "CALL_PUB_KEY":
@@ -273,6 +274,7 @@ class Server_socket:
 
             # send response
             self.send_enc_msg(response)
+            print("sending to client" + response)
 
     def caller_exchange_ip_ecdh(self):
         # =============== EXCHANGE IP =============== #
