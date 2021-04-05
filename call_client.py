@@ -2,127 +2,418 @@
 import pyaudio
 import socket
 import threading
+import time
 
-# Global variables
-message = ""
-message_binary = ""
-message_counter = 0
+class Sender():
+    ##### Socket Variables #####
+    host = ''
+    port = ''
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    end_call = False
 
-encode_data = False
-first_round = True
+    ##### Key Variables #####
+    key = []
 
-key = [1, 5, 3, 4, 0, 4, 2, 2]
-key_counter = 0
+    ##### LISTEN VARIABLES #####
+    blank_counter = 0
+    end_counter_decode = 0
+    key_counter_decode = 0
+    message_bytes = b''
+    collecting_data = False
+    finished_message = False
+    message_gathering = False
 
-end_counter = 0
-
-
-##### Get the bits to OR or AND with the data #####
-def get_bitwise_data(value, position):
-    if value==0:
-        bitwise_str = "11111111"
-        final_bitwise_str = bitwise_str[:2+position] + "0" + bitwise_str[3 + position:]
-    else:
-        bitwise_str = "00000000"
-        final_bitwise_str = bitwise_str[:2 + position] + "1" + bitwise_str[3 + position:]
-    return int(final_bitwise_str, 2)
-
-def reset_global_variables():
-    global message, message_binary, message_counter, key_counter, encode_data, first_round, end_counter
-    message = ""
+    ##### SPEAK VARIABLES #####
     message_binary = ""
     message_counter = 0
-
+    end_counter_encode = 0
+    key_counter_encode = 0
     encode_data = False
     first_round = True
 
-    key_counter = 0
-    end_counter = 0
-
-##### Call function for sending (pick up mic data and send) ######
-def sender(host, port):
-    global message, message_binary, message_counter, key_counter, encode_data, first_round, end_counter
-    ##### Pyaudio Initialization #####
+    ##### Pyaudio Variables #####
     FORMAT = pyaudio.paInt16
     CHANNELS = 2
     RATE = 44100
-    BUFFER=1024
+    INPUT_BUFFER = 1024
+    OUTPUT_BUFFER = 4096
+    input_stream = None
+    output_stream = None
 
-    p = pyaudio.PyAudio()
-    input_stream = p.open(format=FORMAT,
-                                input=True, rate=RATE, channels=CHANNELS,
-                                frames_per_buffer=BUFFER)
 
-    ##### Socket Initialization #####
-    # Call #
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((host, port))
+    def __init__(self, host, port, key):
+        self.host = host
+        self.port = port
+        self.key = key
 
-    while True:
-        # Get data from mic
-        data = input_stream.read(BUFFER)
 
-        # If there is data to be encoded then encode the data before sending
-        if encode_data:
+    def get_bitwise_data(self, value, position):
+        if value==0:
+            bitwise_str = "11111111"
+            final_bitwise_str = bitwise_str[:position] + "0" + bitwise_str[1 + position:]
+        else:
+            bitwise_str = "00000000"
+            final_bitwise_str = bitwise_str[:position] + "1" + bitwise_str[1 + position:]
+        return int(final_bitwise_str, 2)
 
-            # Insert data
-            modified_data = b''
-            current_index = 0
 
-            if first_round:
-                # Set the start pattern (8 x 00001111)
-                for i in range(8):
-                    modified_data += bytes({int('00001111', 2)})
-                    current_index += 1
-                first_round = False
+    def reset_global_variables_listen(self):
+        self.key_counter_decode = 0
+        self.blank_counter = 0
+        self.end_counter_decode = 0
 
-            # Insert data until end of message binary or end of packet
-            while current_index < 4096 and message_counter < len(message_binary):
-                if message_binary[message_counter] == "1":
-                    modified_data += bytes({data[current_index] | get_bitwise_data(1, key[key_counter])})
-                else:
-                    modified_data += bytes({data[current_index] & get_bitwise_data(0, key[key_counter])})
-                key_counter = (key_counter + 1) % len(key)
-                message_counter += 1
-                current_index += 1
+        self.message_bytes = b''
 
-            # If completed the message then start inserting the end pattern
-            if message_counter == len(message_binary):
+        self.collecting_data = False
+        self.finished_message = False
+        self.message_gathering = False
 
-                # insert 8 OR until end of packet
-                while current_index < 4096 and end_counter < 8:
-                    modified_data += bytes({int('00001111', 2)})
-                    current_index += 1
-                    end_counter += 1
 
-            # If the end pattern is completed then done
-            if end_counter == 8:
-                while current_index < 4096:
-                    modified_data += bytes({data[current_index]})
-                    current_index += 1
-                reset_global_variables()
+    def reset_global_variables_speak(self):
+        self.message_binary = ""
+        self.message_counter = 0
 
-            s.send(modified_data)
-            continue
+        self.encode_data = False
+        self.first_round = True
 
-        # Send normal data when no message
-        s.send(data)
+        self.key_counter_encode = 0
+        self.end_counter_encode = 0
+
+
+    def call(self):
+        self.sock.connect((self.host, self.port))
+
+        ##### Pyaudio Initialization #####
+        p = pyaudio.PyAudio()
+        self.input_stream = p.open(format=self.FORMAT,
+                              input=True, rate=self.RATE, channels=self.CHANNELS,
+                              frames_per_buffer=self.INPUT_BUFFER)
+        self.output_stream = p.open(format=self.FORMAT,
+                               output=True, rate=self.RATE, channels=self.CHANNELS,
+                               frames_per_buffer=self.OUTPUT_BUFFER)
+
+        listen_thread = threading.Thread(target=self.listen)
+        listen_thread.start()
+
+        speak_thread = threading.Thread(target=self.speak)
+        speak_thread.start()
+
+
+    def listen(self):
+        while not self.end_call:
+            try:
+                data = self.sock.recv(self.OUTPUT_BUFFER)
+                if data:
+                    self.output_stream.write(data)
+                    current_index = 0
+
+                    # Not currently collecting data then...
+                    if not self.collecting_data:
+
+                        # Search for 00001111 to signify start of message
+                        for i in range(8):
+                            if data[i] == int('00001111', 2):
+                                self.blank_counter += 1
+                                current_index += 1
+                            else:
+                                self.blank_counter = 0
+                                current_index += 1
+                        if self.blank_counter == 8:
+                            self.collecting_data = True
+
+                    # if collecting data
+                    if self.collecting_data:
+
+                        # keep collecting data until finding 8 x 00001111 or until end of packet
+                        while self.end_counter_decode < 8 and current_index < 4096:
+                            if data[current_index] == int('00001111', 2):
+                                self.message_bytes += bytes({data[current_index]})
+                                self.end_counter_decode += 1
+                            else:
+                                self.message_bytes += bytes({data[current_index]})
+                                self.end_counter_decode = 0
+
+                            current_index += 1
+
+                        # if end pattern is found then stop collecting data
+                        if self.end_counter_decode == 8:
+                            self.finished_message = True
+
+                    if self.finished_message:
+                        # Convert bytes to string binary
+                        message_bin = ""
+                        for byte in self.message_bytes:
+                            bin_str = bin(byte)[2:]
+                            for i in range(8 - len(bin_str)):
+                                bin_str = "0" + bin_str
+
+                            message_bin += bin_str[self.key[self.key_counter_decode]]
+                            self.key_counter_decode = (self.key_counter_decode + 1) % len(self.key)
+
+                        # Convert string binary to string
+                        message = ""
+                        message_bin = message_bin[:-8]
+                        for i in range(0, len(message_bin), 8):
+                            message = bytes({int(message_bin[i:i + 8], 2)}).decode("utf-8") + message
+
+                        # print
+                        print(message)
+                        self.reset_global_variables_listen()
+            except Exception as e:
+                break
+
+        # Close connection
+        try:
+            self.sock.shutdown(socket.SHUT_RDWR)
+            self.sock.close()
+        except:
+            pass
+
+
+    def speak(self):
+        while not self.end_call:
+            try:
+                # Get data from mic
+                data = self.input_stream.read(self.INPUT_BUFFER)
+
+                # If there is data to be encoded then encode the data before sending
+                if self.encode_data:
+
+                    # Insert data
+                    modified_data = b''
+                    current_index = 0
+
+                    if self.first_round:
+                        # Set the start pattern (8 x 00001111)
+                        for i in range(8):
+                            modified_data += bytes({int('00001111', 2)})
+                            current_index += 1
+                        self.first_round = False
+
+                    # Insert data until end of message binary or end of packet
+                    while current_index < 4096 and self.message_counter < len(self.message_binary):
+                        if self.message_binary[self.message_counter] == "1":
+                            modified_data += bytes({data[current_index] | self.get_bitwise_data(1, self.key[self.key_counter_encode])})
+                        else:
+                            modified_data += bytes({data[current_index] & self.get_bitwise_data(0, self.key[self.key_counter_encode])})
+                        self.key_counter_encode = (self.key_counter_encode + 1) % len(self.key)
+                        self.message_counter += 1
+                        current_index += 1
+
+                    # If completed the message then start inserting the end pattern
+                    if self.message_counter == len(self.message_binary):
+
+                        # insert 8 OR until end of packet
+                        while current_index < 4096 and self.end_counter_encode < 8:
+                            modified_data += bytes({int('00001111', 2)})
+                            current_index += 1
+                            self.end_counter_encode += 1
+
+                    # If the end pattern is completed then done
+                    if self.end_counter_encode == 8:
+                        while current_index < 4096:
+                            modified_data += bytes({data[current_index]})
+                            current_index += 1
+                        self.reset_global_variables_speak()
+
+                    self.sock.send(modified_data)
+                    continue
+
+                # Send normal data when no message
+                self.sock.send(data)
+            except Exception as e:
+                break
+
+        # Close connection
+        try:
+            self.sock.shutdown(socket.SHUT_RDWR)
+            self.sock.close()
+            print("Call ended")
+
+        except:
+            print("Call ended")
+
+        self.reset_global_variables_speak()
+
+
+    def send_message(self, message):
+        self.message_binary = bin(int.from_bytes(bytes(message, 'utf-8'), byteorder='little'))[2:]
+
+        if len(self.message_binary) % 8 != 0:
+            for i in range(8 - (len(self.message_binary) % 8)):
+                self.message_binary = "0" + self.message_binary
+
+        self.encode_data = True
+
+
+    def end(self):
+        self.end_call = True
+
+
+
+
+
 
 
 if __name__ == '__main__':
     host = '192.168.0.111'
     port = 10001
 
-    sender_thread = threading.Thread(target=sender, args=(host, port,))
-    sender_thread.start()
+    s = Sender(host, port, [1, 5, 3, 4, 0, 7, 2, 6])
+    s.call()
 
-    while True:
-        print("Please enter a message: ")
-        message = str(input())
-        message_binary = bin(int.from_bytes(bytes(message, 'utf-8'), byteorder='little'))[2:]
 
-        if len(message_binary) % 8 != 0:
-            for i in range(8-(len(message_binary) % 8)):
-                message_binary = "0"+message_binary
+    # Send a message after 3 seconds (For testing)
+    time.sleep(3)
+    s.send_message("Hello this is a message")
 
-        encode_data = True
+    # End call (for testing)
+    time.sleep(12)
+    s.end()
+
+
+
+
+
+
+
+
+
+
+
+
+
+# # Global variables
+# message = ""
+# message_binary = ""
+# message_counter = 0
+# end_counter = 0
+#
+# encode_data = False
+# first_round = True
+#
+# key = [1, 5, 3, 4, 0, 4, 2, 2]
+# key_counter = 0
+#
+#
+#
+#
+# ##### Get the bits to OR or AND with the data #####
+# def get_bitwise_data(value, position):
+#     if value==0:
+#         bitwise_str = "11111111"
+#         final_bitwise_str = bitwise_str[:2 + position] + "0" + bitwise_str[3 + position:]
+#     else:
+#         bitwise_str = "00000000"
+#         final_bitwise_str = bitwise_str[:2 + position] + "1" + bitwise_str[3 + position:]
+#     return int(final_bitwise_str, 2)
+#
+# def reset_global_variables():
+#     global message, message_binary, message_counter, key_counter, encode_data, first_round, end_counter
+#     message = ""
+#     message_binary = ""
+#     message_counter = 0
+#
+#     encode_data = False
+#     first_round = True
+#
+#     key_counter = 0
+#     end_counter = 0
+#
+# ##### Call function for sending (pick up mic data and send) ######
+# def sender(host, port):
+#     global message, message_binary, message_counter, key_counter, encode_data, first_round, end_counter
+#
+#
+#     ##### Socket Initialization #####
+#     # Call #
+#     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#     s.connect((host, port))
+#
+#     ##### Pyaudio Initialization #####
+#     FORMAT = pyaudio.paInt16
+#     CHANNELS = 2
+#     RATE = 44100
+#     BUFFER = 1024
+#
+#     p = pyaudio.PyAudio()
+#     input_stream = p.open(format=FORMAT,
+#                           input=True, rate=RATE, channels=CHANNELS,
+#                           frames_per_buffer=BUFFER)
+#     output_stream = p.open(format=FORMAT,
+#                            output=True, rate=RATE, channels=CHANNELS,
+#                            frames_per_buffer=BUFFER)
+#
+#     while True:
+#         # Get data from mic
+#         data = input_stream.read(BUFFER)
+#
+#         # If there is data to be encoded then encode the data before sending
+#         if encode_data:
+#
+#             # Insert data
+#             modified_data = b''
+#             current_index = 0
+#
+#             if first_round:
+#                 # Set the start pattern (8 x 00001111)
+#                 for i in range(8):
+#                     modified_data += bytes({int('00001111', 2)})
+#                     current_index += 1
+#                 first_round = False
+#
+#             # Insert data until end of message binary or end of packet
+#             while current_index < 4096 and message_counter < len(message_binary):
+#                 if message_binary[message_counter] == "1":
+#                     modified_data += bytes({data[current_index] | get_bitwise_data(1, key[key_counter])})
+#                 else:
+#                     modified_data += bytes({data[current_index] & get_bitwise_data(0, key[key_counter])})
+#                 key_counter = (key_counter + 1) % len(key)
+#                 message_counter += 1
+#                 current_index += 1
+#
+#             # If completed the message then start inserting the end pattern
+#             if message_counter == len(message_binary):
+#
+#                 # insert 8 OR until end of packet
+#                 while current_index < 4096 and end_counter < 8:
+#                     modified_data += bytes({int('00001111', 2)})
+#                     current_index += 1
+#                     end_counter += 1
+#
+#             # If the end pattern is completed then done
+#             if end_counter == 8:
+#                 while current_index < 4096:
+#                     modified_data += bytes({data[current_index]})
+#                     current_index += 1
+#                 reset_global_variables()
+#
+#             s.send(modified_data)
+#             continue
+#
+#         # Send normal data when no message
+#         s.send(data)
+#
+#         # Recieve data
+#         # data_recv = s.recv(BUFFER)
+#         # if data_recv:
+#         #     output_stream.write(data_recv)
+#
+#
+# if __name__ == '__main__':
+#     host = '192.168.0.111'
+#     port = 10001
+#
+#     sender_thread = threading.Thread(target=sender, args=(host, port,))
+#     sender_thread.start()
+#
+#     while True:
+#         print("Please enter a message: ")
+#         message = str(input())
+#         message_binary = bin(int.from_bytes(bytes(message, 'utf-8'), byteorder='little'))[2:]
+#
+#         if len(message_binary) % 8 != 0:
+#             for i in range(8-(len(message_binary) % 8)):
+#                 message_binary = "0"+message_binary
+#
+#         encode_data = True
