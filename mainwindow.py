@@ -10,6 +10,8 @@ from worker import Worker
 import time
 import client_class
 from msg_design import *
+from listen_call_req_worker import ListenCallReqWorker
+from init_call_req_worker import InitCallReqWorker
 
 class UiMainWindow(QtWidgets.QMainWindow):
 
@@ -41,10 +43,14 @@ class UiMainWindow(QtWidgets.QMainWindow):
         #socket stuff
         self.client_obj = None
         self.socket = None
-
-        self.call_listener_thread = None
-
         
+        self.call_listener_thread = None
+        self.listen_call_req_work = None
+        self.init_call_req_work = None
+
+        self.calling_name = None
+        
+        self.pushButton.clicked.connect(lambda: self.change_page(3))
 
 
     '''
@@ -72,9 +78,15 @@ class UiMainWindow(QtWidgets.QMainWindow):
             if self.client_obj.set_username(self.get_nickname()):
 
                 #start call listener thread
+                
+                self.listen_call_req_work = ListenCallReqWorker(self.client_obj)
+                self.listen_call_req_work.signals.caller.connect(self.init_call_recv_timer)
+                self.listen_call_req_work.start()
+                #self.listen_call_req_work.autoDelete()
+                #self.threadpool.start(self.listen_call_req_work)
 
-                self.call_listener_thread = threading.Thread(target=self.client_obj.listen_call_req)
-                self.call_listener_thread.start()
+                # self.call_listener_thread = threading.Thread(target=self.client_obj.listen_call_req)
+                # self.call_listener_thread.start()
 
                 time.sleep(2)
                 # get new contact list from server
@@ -103,8 +115,13 @@ class UiMainWindow(QtWidgets.QMainWindow):
     def refresh_contact_list(self):
 
         # pause call_lister to refresh contact list
-        self.client_obj.listen_call_req_pause()
-        self.call_listener_thread.join()
+        #self.client_obj.listen_call_req_pause()
+        self.client_obj = self.listen_call_req_work.retClient()
+        self.listen_call_req_work.listen_call_req_pause()
+        self.listen_call_req_work.wait()
+        self.listen_call_req_work.exit()
+        #self.listen_call_req_work.pause()
+        #self.call_listener_thread.join()
 
         # disable GUI to refresh contact list
         self.display_contact_list.setEnabled(False)
@@ -116,9 +133,17 @@ class UiMainWindow(QtWidgets.QMainWindow):
         online_users = self.client_obj.get_online_users()
 
         #start call_lister again
-        self.client_obj.listen_call_req_start()
-        self.call_listener_thread = threading.Thread(target=self.client_obj.listen_call_req)
-        self.call_listener_thread.start()
+        #self.client_obj.listen_call_req_start()
+        self.listen_call_req_work.insertClient(self.client_obj)
+        self.listen_call_req_work.listen_call_req_start()
+        self.listen_call_req_work = ListenCallReqWorker(self.client_obj)
+        self.listen_call_req_work.signals.caller.connect(self.init_call_recv_timer)
+        self.listen_call_req_work.start()
+        
+        #self.listen_call_req_work.run()
+        #self.listen_call_req_work.resume()
+        # self.call_listener_thread = threading.Thread(target=self.client_obj.listen_call_req)
+        # self.call_listener_thread.start()
         #self.client_obj.listen_call_req_start()
 
 
@@ -142,27 +167,50 @@ class UiMainWindow(QtWidgets.QMainWindow):
             self.contact_error_msg.setText("You have not chose any contact to call.")
             return False
         else:
-            self.send_call_text.setText("You are calling...\n" + self.display_contact_list.currentItem().text())
+            self.calling_name = self.display_contact_list.currentItem().text()
+            #self.send_call_text.setText("You are calling...\n" + self.display_contact_list.currentItem().text())
 
             # pause call_lister to refresh contact list
-            self.client_obj.listen_call_req_pause()
-            self.call_listener_thread.join()
-
+            #self.client_obj.listen_call_req_pause()
+            
+            self.client_obj = self.listen_call_req_work.retClient()
+            self.listen_call_req_work.listen_call_req_pause()
+            self.listen_call_req_work.wait()
+            self.listen_call_req_work.exit()
+            #self.call_listener_thread.join()
+            #self.listen_call_req_work.pause()
 
             # 1) send _NAME_CALL_ to Bob he is available
 
             # start call_lister again
 
-            self.client_obj.initiate_call_req(self.display_contact_list.currentItem().text())
+            self.init_call_req_work = InitCallReqWorker(self.client_obj, self.calling_name)
+            self.init_call_req_work.signals.finished.connect(self.init_call_send_timer)
+            self.init_call_req_work.start()
+            self.init_call_req_work.wait()
+            self.init_call_req_work.exit()
+            #self.init_call_req_work.autoDelete()
+            #self.threadpool.start(self.init_call_req_work)
+            #self.client_obj.initiate_call_req(self.display_contact_list.currentItem().text())
 
             # 3) upon receive _NAME_RECV_, wait for server send Bob's IP
 
             #start call_listener
-            self.client_obj.listen_call_req_start()
-            self.call_listener_thread = threading.Thread(target=self.client_obj.listen_call_req)
-            self.call_listener_thread.start()
+            #self.client_obj.listen_call_req_start()
+            
+            self.listen_call_req_work.insertClient(self.client_obj)
+            self.listen_call_req_work.listen_call_req_start()
+            self.listen_call_req_work = ListenCallReqWorker(self.client_obj)
+            self.listen_call_req_work.signals.caller.connect(self.init_call_recv_timer)
+            self.listen_call_req_work.start()
+            #self.listen_call_req_work.run()
+            
+            #self.listen_call_req_work.resume()
+            # self.call_listener_thread = threading.Thread(target=self.client_obj.listen_call_req)
+            # self.call_listener_thread.start()
             # 4) send _CALL_REQ_
 
+            self.stop_contact_pg()
             self.start_send_call_pg()
             return True
     
@@ -177,6 +225,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         # 5) wait for _CALL_REQ_
 
         # 6) if succeeded, change to send call page
+        self.stop_contact_pg()
         self.start_recv_call_pg()
 
     '''
@@ -277,6 +326,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.change_page(1)
 
     def stop_contact_pg(self):
+        #reminder to andy to use this for send and recv.
         self.start_call_button.clicked.disconnect()
         self.refresh_button.clicked.disconnect()
 
@@ -291,7 +341,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
     def start_recv_call_pg(self):
         self.accept_call_button.clicked.connect(lambda: self.init_accept_call())
         self.reject_call_button.clicked.connect(lambda: self.init_reject_call())
-        self.recv_call_text.setText(self.get_nickname() + "\n is calling...") # change to Alice name
+        #self.recv_call_text.setText(self.get_nickname() + "\n is calling...") # change to Alice name
         self.change_page(3)
 
     def stop_recv_call_pg(self):
@@ -405,4 +455,40 @@ class UiMainWindow(QtWidgets.QMainWindow):
             self.init_error_msg.setText(error)
         else:
             self.stop_intro_pg()
+
+    def init_call_send_timer(self, caller):
+        self.listen_call_req_timer = QtCore.QTimer()
+        self.listen_call_req_timer.setInterval(1000)
+        self.counter = 1
+        self.listen_call_req_timer.timeout.connect(lambda caller=caller: self.print_call_send(caller))
+        self.listen_call_req_timer.start()
+
+    def init_call_recv_timer(self, caller):
+        self.listen_call_req_timer = QtCore.QTimer()
+        self.listen_call_req_timer.setInterval(1000)
+        self.counter = 1
+        self.listen_call_req_timer.timeout.connect(lambda caller=caller: self.print_call_recv(caller))
+        self.listen_call_req_timer.start()
+
+    def print_call_send(self, caller):
+        print("send")
+        dot_string = ""
+        for _ in range(self.counter):
+            dot_string += "."
+        self.send_call_text.setText("Calling " + self.calling_name + dot_string)
+        self.counter += 1
+
+        if self.counter > 3:
+            self.counter = 1
+    
+    def print_call_recv(self, caller):
+        print("recv")
+        dot_string = ""
+        for _ in range(self.counter):
+            dot_string += "."
+        self.recv_call_text.setText(caller + " is calling" + dot_string)
+        self.counter += 1
+
+        if self.counter > 3:
+            self.counter = 1
             
