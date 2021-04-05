@@ -34,15 +34,18 @@ class InitCallReqWorker(QtCore.QThread):
             print("calling....")
 
             response = "header: CALL_REQ content: " + self.call_target + " [EOM]"  # msg structure smt like header=purpose of msg
-            self.send_enc_msg(response)
+            response = self.client.encrypt_content(response)
+            self.client.send_msg(response)
 
-            msg = self.recv_enc_msg()
+            msg = self.client.recv_msg()
+            msg = self.client.decrypt_content(msg)
 
             if msg and msg_processor.get_header_field(msg) == "CALL_REQ_RES":
                 response = msg_processor.get_content_field(msg)
                 if response == "ack":
 
-                    msg = self.recv_enc_msg()
+                    msg = self.client.recv_msg()
+                    msg = self.client.decrypt_content(msg)
 
                     if msg and msg_processor.get_header_field(msg) == "CALLER_IP":
                         caller_ip = msg_processor.get_content_field(msg)
@@ -51,14 +54,16 @@ class InitCallReqWorker(QtCore.QThread):
                         key_obj = cryptodriver.make_dhe_key_obj()
                         own_public_key = cryptodriver.make_dhe_keypair(key_obj)
 
-                        msg = self.recv_enc_msg()
+                        msg = self.client.recv_msg()
+                        msg = self.client.decrypt_content(msg)
                         print(msg)
                         if msg_processor.get_header_field(msg) == "CALL_PUB_KEY":
                             recipient_public_key = msg_processor.get_content_field(msg)
                             key_obj = cryptodriver.make_dhe_key_obj()
                             own_public_key = cryptodriver.make_dhe_keypair(key_obj)
                             response = "header: CALL_PUB_KEY content: " + own_public_key + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
-                            self.send_enc_msg(response)
+                            response = self.client.encrypt_content(response)
+                            self.client.send_msg(response)
                             shared_key = cryptodriver.make_dhe_sharedkey(key_obj, recipient_public_key)
                             print("Shared: key is: "+shared_key)   
         except:
@@ -70,16 +75,10 @@ class InitCallReqWorker(QtCore.QThread):
         finally:
             self.signals.finished.emit(self.call_target)          
 
+    # return client object
     def retClient(self):
         return self.client
 
+    # insert client object
     def insertClient(self, client):
         self.client = client
-
-    def isSignalConnected(self, obj, name):
-        index = obj.metaObject().indexOfMethod(name)
-        if index > -1:
-            method = obj.metaObject().method(index)
-            if method:
-                return obj.isSignalConnected(method)
-        return False

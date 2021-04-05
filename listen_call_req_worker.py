@@ -35,9 +35,12 @@ class ListenCallReqWorker(QtCore.QThread):
             print("Starting call listener...")
 
             response = "header: CHECK_INC_CALL_REQ content: ok [EOM]"  # msg structure smt like header=purpose of msg
-            self.send_enc_msg(response)
+            response = self.client.encrypt_content(response)
 
-            msg = self.recv_enc_msg()
+            self.client.send_msg(response)
+
+            msg = self.client.recv_msg()
+            msg = self.client.decrypt_content(msg)
 
             if msg and msg_processor.get_header_field(msg) == "INC_CALL_REQ":
                 caller = msg_processor.get_content_field(msg)
@@ -49,9 +52,12 @@ class ListenCallReqWorker(QtCore.QThread):
                     print("accepting call")
 
                     response = "header: INC_CALL_REQ_RES content: ack [EOM]"  # msg structure smt like header=purpose of msg
-                    self.send_enc_msg(response)
+                    response = self.client.encrypt_content(response)
 
-                    msg = self.recv_enc_msg()
+                    self.client.send_msg(response)
+
+                    msg = self.client.recv_msg()
+                    msg = self.client.decrypt_content(msg)
 
 
                     print(msg)
@@ -65,9 +71,11 @@ class ListenCallReqWorker(QtCore.QThread):
 
 
                         response = "header: CALL_PUB_KEY content: " + own_public_key + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
-                        self.send_enc_msg(response)
+                        response = self.client.encrypt_content(response)
+                        self.client.send_msg(response)
 
-                        msg = self.recv_enc_msg()
+                        msg = self.client.recv_msg()
+                        msg = self.client.decrypt_content(msg)
                         if msg_processor.get_header_field(msg) == "CALL_PUB_KEY":
                             recipient_public_key = msg_processor.get_content_field(msg)
                             shared_key = cryptodriver.make_dhe_sharedkey(key_obj, recipient_public_key)
@@ -85,16 +93,10 @@ class ListenCallReqWorker(QtCore.QThread):
     def listen_call_req_pause(self):
         self.listen_call = False
 
+    # return client object
     def retClient(self):
         return self.client
 
+    # insert client object
     def insertClient(self, client):
         self.client = client
-
-    def isSignalConnected(self, obj, name):
-        index = obj.metaObject().indexOfMethod(name)
-        if index > -1:
-            method = obj.metaObject().method(index)
-            if method:
-                return obj.isSignalConnected(method)
-        return False
