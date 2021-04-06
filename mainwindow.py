@@ -259,7 +259,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.init_req_thread.signals.timeout.disconnect()
         self.send_timer.stop()
         self.stop_send_call_pg()
-        self.start_chat_pg(self.receiver_name, key, caller_ip, self.client_obj.ip, "sender")
+        self.start_chat_pg(self.receiver_name, key, caller_ip, "sender")
 
     def stop_send_call(self):
 
@@ -323,7 +323,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.receive_timer.timeout.disconnect()
         self.send_ack_thread.signals.call_accepted.disconnect()
         self.stop_recv_call_pg()
-        self.start_chat_pg(self.sender_name, key, caller_ip, self.client_obj.ip, "receiver")
+        self.start_chat_pg(self.sender_name, key, self.client_obj.ip, "receiver")
         
     def init_reject_call(self):
         # perform all the actions to process reject call
@@ -336,6 +336,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
     '''
     def end_conversation(self, messenger):
         # perform all the actions to process end call during chat
+        messenger.send_message(self.get_nickname() + " has left the chatroom")
         messenger.end()
         self.messenger_thread.exit()
         self.listen_thread.signals.message_received.disconnect()
@@ -413,7 +414,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.accept_call_button.clicked.disconnect()
         self.reject_call_button.clicked.disconnect()
 
-    def start_chat_pg(self, name, key, caller_ip, host_ip, role):
+    def start_chat_pg(self, name, key, ip, role):
         self.display_name.setEnabled(True)
         self.display_name.setText("😀😀😀😀😀 " + name + " 😀😀😀😀😀")
         self.display_msg.setEnabled(True)
@@ -425,7 +426,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
 
         port = 10001 
         if role == "sender":
-            self.sender.set_details(caller_ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
+            self.sender.set_details(ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
             self.messenger_thread = MessengerWorker("sender", self.sender)
             self.messenger_thread.start()
             self.messenger_thread.wait()
@@ -442,7 +443,8 @@ class UiMainWindow(QtWidgets.QMainWindow):
             self.end_call_button.clicked.connect(lambda: self.end_conversation(self.sender))
 
         if role == "receiver":
-            self.receiver.set_details(host_ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
+
+            self.receiver.set_details(ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
             self.messenger_thread = MessengerWorker("receiver", self.receiver)
             self.messenger_thread.start()
             self.messenger_thread.wait()
@@ -522,3 +524,16 @@ class UiMainWindow(QtWidgets.QMainWindow):
 
         else:
             return "Failed to connect to server"
+
+    def get_stegno_position(self, key):
+        # extract the key position to determine the audio arrangement to stegno the message
+        stegno_position_list = []
+        stegno_position_list.append(int(key[72]))
+        stegno_position_list.append(int(key[174]))
+        stegno_position_list.append(int(key[255]))
+        stegno_position_list.append(int(key[321]))
+        stegno_position_list.append(int(key[413]))
+        stegno_position_list.append(int(key[479]))
+        stegno_position_list.append(int(key[526]))
+        stegno_position_list.append(int(key[587]))
+        return stegno_position_list

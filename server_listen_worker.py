@@ -134,9 +134,9 @@ class ServerListenWorker(QtCore.QThread):
         try:
             #self.role.sock.shutdown(socket.SHUT_RDWR)
             self.role.sock.close()
-            print("listen server: shutdonw")
+            print("server listen: shutdown")
         except:
-            print("listen server: stst E" + str(e))
+            print("server listen: shutdown" + str(e))
             pass
 
         self.role.reset_global_variables_listen()

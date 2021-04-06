@@ -106,9 +106,9 @@ class ServerSpeakWorker(QtCore.QThread):
         try:
             #self.role.sock.shutdown(socket.SHUT_RDWR)
             self.role.sock.close()
-            print("serCall ended0")
+            print("server speak shutdown")
 
         except Exception as e:
-            print("serCall ended1" + str(e))
+            print("server speak shutdown" + str(e))
 
         self.role.reset_global_variables_speak()

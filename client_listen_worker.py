@@ -130,9 +130,8 @@ class ClientListenWorker(QtCore.QThread):
         try:
             #self.role.sock.shutdown(socket.SHUT_RDWR)
             self.role.sock.close()
-            print("listen client: shutdown nicely" )
+            print("client listen: shutdown")
         except:
-            print("listen client: shutdown with issue" + str(e))
-            pass
+            print("client listen: shutdown" + str(e))
 
         self.role.reset_global_variables_listen()

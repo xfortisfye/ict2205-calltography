@@ -105,7 +105,7 @@ class ClientSpeakWorker(QtCore.QThread):
             print("Client Call ended")
 
         except Exception as e:
-            print("Client Call ended with issue" + str(e))
+            print("Client Call ended" + str(e))
 
         self.role.reset_global_variables_speak()
 

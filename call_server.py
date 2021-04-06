@@ -103,9 +103,6 @@ class Receiver():
 
     def wait_for_call(self):
         self.client, address = self.sock.accept()
-
-        ##### TODO: PICK UP #####
-
         ##### Pyaudio Initialization #####
         p = pyaudio.PyAudio()
         self.input_stream = p.open(format=self.FORMAT,
