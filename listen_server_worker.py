@@ -23,12 +23,7 @@ class ListenServerWorker(QtCore.QThread):
 
     @QtCore.pyqtSlot()
     def run(self):
-        '''
-        Initialise the runner function with passed args, kwargs.
-        '''
-        
         while not self.role.end_call:
-            print("while L-S loop")
             try:
                 data = self.role.client.recv(self.role.OUTPUT_BUFFER)
                 if data:
@@ -128,7 +123,6 @@ class ListenServerWorker(QtCore.QThread):
                         # print
                         if message_digest == hashlib.sha512(message.encode("utf-8")).hexdigest():
                             self.signals.message_received.emit(message)
-                            print(message) #TODO do whatever you want with the message
 
                         self.role.reset_global_variables_listen()
             except Exception as e:

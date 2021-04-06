@@ -19,10 +19,7 @@ class MessengerWorker(QtCore.QThread):
 
     @QtCore.pyqtSlot()
     def run(self):
-        '''
-        Initialise the runner function with passed args, kwargs.
-        '''
-        print(" asd" + self.messenger.host)
+        print("Messenger_worker -> Role: " + self.role + print( " | IP :  " + self.messenger.host)
         if self.role == "sender":
             self.messenger.reset_global_variables_listen()
             self.messenger.reset_global_variables_speak()

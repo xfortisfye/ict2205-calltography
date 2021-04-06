@@ -102,10 +102,10 @@ class ClientSpeakWorker(QtCore.QThread):
         try:
             self.role.sock.shutdown(socket.SHUT_RDWR)
             self.role.sock.close()
-            print("clieCall ended0")
+            print("Client Call ended")
 
         except Exception as e:
-            print("clieCall ended1" + str(e))
+            print("Client Call ended with issue" + str(e))
 
         self.role.reset_global_variables_speak()
 

@@ -18,8 +18,6 @@ class WorkerSignals(QtCore.QObject):
 class ClientListenWorker(QtCore.QThread):
     def __init__(self, role):
         super(ClientListenWorker, self).__init__()
-
-        # Store constructor arguments (re-used for processing)
         self.signals = WorkerSignals()
         self.role = role
 
@@ -132,9 +130,9 @@ class ClientListenWorker(QtCore.QThread):
         try:
             self.role.sock.shutdown(socket.SHUT_RDWR)
             self.role.sock.close()
-            print("listen client: shtudown" )
+            print("listen client: shutdown nicely" )
         except:
-            print("listen client: shutexecpt" + str(e))
+            print("listen client: shutdown with issue" + str(e))
             pass
 
         self.role.reset_global_variables_listen()
