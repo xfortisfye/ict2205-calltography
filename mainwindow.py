@@ -13,6 +13,8 @@ import PyQt5.QtMultimediaWidgets
 from PyQt5 import uic, QtWidgets, QtCore, QtGui
 import time
 import client_class
+from call_client import Sender
+from call_server import Receiver
 from msg_design import *
 from server_auth_worker import ServerAuthWorker
 from listen_req_worker import ListenRequestWorker
@@ -212,7 +214,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.init_req_thread.signals.call_accepted.disconnect()
         self.send_timer.stop()
         self.stop_send_call_pg()
-        self.start_chat_pg(self.receiver_name, key, caller_ip)
+        self.start_chat_pg(self.receiver_name, key, caller_ip, self.client_obj.ip)
 
     def stop_send_call(self):
             # perform all the actions to process stop call
@@ -276,7 +278,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.receive_timer.timeout.disconnect()
         self.send_ack_thread.signals.call_accepted.disconnect()
         self.stop_recv_call_pg()
-        self.start_chat_pg(self.sender_name, key, caller_ip)
+        self.start_chat_pg(self.sender_name, key, caller_ip, self.client_obj.ip)
         
     def init_reject_call(self):
         # perform all the actions to process reject call
@@ -365,7 +367,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.reject_call_button.clicked.disconnect()
         self.start_contact_pg()
 
-    def start_chat_pg(self, name, key, caller_ip):
+    def start_chat_pg(self, name, key, caller_ip, host_ip):
         self.display_name.setEnabled(True)
         self.display_name.setText(name + caller_ip)
         self.display_msg.setEnabled(True)
@@ -376,6 +378,11 @@ class UiMainWindow(QtWidgets.QMainWindow):
         #self.mute_button.clicked.connect(lambda: self.init_send_msg()) # andy if time persist then we do
         self.end_call_button.clicked.connect(lambda: self.init_end_call())
         self.change_page(4)
+        port = 10001
+        r = Receiver(host_ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
+        s = Sender(caller_ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
+        r.wait_for_call()
+        s.call()
 
     def stop_chat_pg(self):
         self.display_name.setEnabled(False)
