@@ -180,13 +180,15 @@ class Server_socket:
 
         if call_requests_status[self.username] == "canc":
             response = "header: INC_CALL_STATUS_RES content: canc [EOM]"
-            call_requests_status.pop(self.caller)
+            #call_requests_status.pop(self.caller)
+            call_requests_status[self.caller] = False
             call_requests[self.username] = False
 
 
         elif call_requests_status[self.username] == "timeout":
             response = "header: INC_CALL_STATUS_RES content: timeout [EOM]"
-            call_requests_status.pop(self.caller)
+           # call_requests_status.pop(self.caller)
+            call_requests_status[self.caller] = False
             call_requests[self.username] = False
 
         else:
@@ -283,7 +285,8 @@ class Server_socket:
                         response = "header: CALL_REQ_RES content: ack [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
                         self.send_enc_msg(response)
                         self.caller_exchange_ip_ecdh()
-                        call_requests_status.pop(self.call_target)
+                        #call_requests_status.pop(self.call_target)
+                        call_requests_status[self.call_target] = False
                         break
 
                     # else if call_target has declined
@@ -291,11 +294,12 @@ class Server_socket:
                         response = "header: CALL_REQ_RES content: dec [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
                         self.send_enc_msg(response)
 
-                        call_requests_status.pop(self.call_target)
+                        #call_requests_status.pop(self.call_target)
                         break
 
                     elif call_requests_status[self.call_target] == "canc":
-                        call_requests_status.pop(self.caller)
+                        #call_requests_status.pop(self.caller)
+                        call_requests_status[self.call_target] = False
                         break
 
                     else:

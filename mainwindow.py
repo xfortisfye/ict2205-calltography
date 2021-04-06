@@ -100,7 +100,9 @@ class UiMainWindow(QtWidgets.QMainWindow):
 
                 #start listen for request thread
                 self.listen_req_thread = ListenRequestWorker(self.client_obj)
-                self.listen_req_thread.signals.caller.connect(self.init_receive_call) #andy
+                self.listen_req_thread.signals.caller.connect(self.init_receive_call)
+                self.listen_req_thread.signals.reject.connect(self.init_reject_call)
+                self.listen_req_thread.signals.timeout.connect(self.init_reject_call)
                 self.listen_req_thread.start()
 
                 time.sleep(2)
@@ -131,6 +133,8 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.listen_req_thread.wait()
         self.listen_req_thread.exit()
         self.listen_req_thread.signals.caller.disconnect()
+        self.listen_req_thread.signals.reject.disconnect()
+        self.listen_req_thread.signals.timeout.disconnect()
 
         # disable GUI to refresh contact list
         self.display_contact_list.setEnabled(False)
@@ -146,6 +150,8 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.listen_req_thread.listen_call_req_start()
         self.listen_req_thread = ListenRequestWorker(self.client_obj)
         self.listen_req_thread.signals.caller.connect(self.init_receive_call)
+        self.listen_req_thread.signals.reject.connect(self.init_reject_call)
+        self.listen_req_thread.signals.timeout.connect(self.init_reject_call)
         self.listen_req_thread.start()
 
         if online_users:
@@ -183,6 +189,8 @@ class UiMainWindow(QtWidgets.QMainWindow):
             self.init_req_thread = InitRequestWorker(self.client_obj, self.receiver_name)
             self.init_req_thread.signals.start_timer.connect(self.init_send_timer)
             self.init_req_thread.signals.call_accepted.connect(self.init_call_accepted)
+            self.init_req_thread.signals.reject.connect(self.stop_send_call)
+            self.init_req_thread.signals.timeout.connect(self.stop_send_call)
             self.init_req_thread.start()       
 
     '''
@@ -212,12 +220,13 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.send_timer.timeout.disconnect()
         self.init_req_thread.signals.start_timer.disconnect()
         self.init_req_thread.signals.call_accepted.disconnect()
+        self.init_req_thread.signals.reject.disconnect()
+        self.init_req_thread.signals.timeout.disconnect()
         self.send_timer.stop()
         self.stop_send_call_pg()
         self.start_chat_pg(self.receiver_name, key, caller_ip, self.client_obj.ip)
 
     def stop_send_call(self):
-            # perform all the actions to process stop call
         print("rest")
 
         self.client_obj =  self.init_req_thread.retClient()
@@ -227,9 +236,10 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.send_timer.timeout.disconnect()
         self.init_req_thread.signals.start_timer.disconnect()
         self.init_req_thread.signals.call_accepted.disconnect()
+        self.init_req_thread.signals.reject.disconnect()
+        self.init_req_thread.signals.timeout.disconnect()
 
         self.client_obj.send_call_canc()
-
 
         self.stop_send_call_pg()
         self.start_contact_pg()
@@ -282,7 +292,9 @@ class UiMainWindow(QtWidgets.QMainWindow):
         
     def init_reject_call(self):
         # perform all the actions to process reject call
+        print ("hello")
         self.client_obj.send_call_dec()
+        print ("helloooo")
         self.stop_recv_call_pg()
         self.start_contact_pg()
 
@@ -365,7 +377,6 @@ class UiMainWindow(QtWidgets.QMainWindow):
     def stop_recv_call_pg(self):
         self.accept_call_button.clicked.disconnect()
         self.reject_call_button.clicked.disconnect()
-        self.start_contact_pg()
 
     def start_chat_pg(self, name, key, caller_ip, host_ip):
         self.display_name.setEnabled(True)
@@ -378,11 +389,12 @@ class UiMainWindow(QtWidgets.QMainWindow):
         #self.mute_button.clicked.connect(lambda: self.init_send_msg()) # andy if time persist then we do
         self.end_call_button.clicked.connect(lambda: self.init_end_call())
         self.change_page(4)
-        port = 10001
-        r = Receiver(host_ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
-        s = Sender(caller_ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
-        r.wait_for_call()
-        s.call()
+        # port = 10001
+        # r = Receiver(host_ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
+        # port = 10002
+        # s = Sender(caller_ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
+        # r.wait_for_call()
+        # s.call()
 
     def stop_chat_pg(self):
         self.display_name.setEnabled(False)

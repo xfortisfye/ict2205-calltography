@@ -11,6 +11,8 @@ import select
 class WorkerSignals(QtCore.QObject):
     caller = QtCore.pyqtSignal(str)
     init_recv_call = QtCore.pyqtSignal()
+    reject = QtCore.pyqtSignal()
+    timeout = QtCore.pyqtSignal()
 
 
 class ListenRequestWorker(QtCore.QThread):
@@ -68,6 +70,8 @@ class ListenRequestWorker(QtCore.QThread):
 
                             if status == "canc":
                                 print("canc")
+                                
+                                self.signals.reject.emit()
                                 #HI ANDY DO YOUR MAGIC HERE!!!
                                 break
 
@@ -79,6 +83,7 @@ class ListenRequestWorker(QtCore.QThread):
                             if status == "timeout":
                                 # timer here
                                 print("timeout")
+                                self.signals.timeout.emit()
                                 # HI ANDY DO YOUR MAGIC HERE!!!
                                 break
 
