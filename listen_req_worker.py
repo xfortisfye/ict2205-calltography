@@ -8,6 +8,7 @@ import cryptodriver
 import time
 import select
 
+
 class WorkerSignals(QtCore.QObject):
     caller = QtCore.pyqtSignal(str)
     init_recv_call = QtCore.pyqtSignal()
@@ -34,7 +35,7 @@ class ListenRequestWorker(QtCore.QThread):
         while True:
             print("Starting call listener...")
             print(self.listen_call)
-            response = "header: CHECK_INC_CALL_REQ content: ok [EOM]"  # msg structure smt like header=purpose of msg
+            response = "header: CHECK_INC_CALL_REQ content: ok [EOM]"
             response = self.client.encrypt_content(response)
 
             self.client.send_msg(response)
@@ -49,63 +50,57 @@ class ListenRequestWorker(QtCore.QThread):
                     self.signals.init_recv_call.emit()
                     print(caller + " is trying to call you")
 
-                    #shift bottom to another function
-                    # do smt
-
 
 
                     while True:
-
-                        response = "header: INC_CALL_STATUS content: ok [EOM]"  # msg structure smt like header=purpose of msg
+                        # send inc_call_status to server
+                        response = "header: INC_CALL_STATUS content: ok [EOM]"
                         response = self.client.encrypt_content(response)
 
                         self.client.send_msg(response)
 
                         print("check status of call")
-                        print(self.listen_call)
+                        # get server response
                         msg = self.client.recv_msg()
                         msg = self.client.decrypt_content(msg)
+
                         if msg and msg_processor.get_header_field(msg) == "INC_CALL_STATUS_RES":
                             status = msg_processor.get_content_field(msg)
 
+                            # if status is cancelled
                             if status == "canc":
+                                # go back to contacts page
                                 print("canc")
-                                
                                 self.signals.reject.emit()
-                                #HI ANDY DO YOUR MAGIC HERE!!!
+                                # HI ANDY DO YOUR MAGIC HERE!!!
                                 break
 
+                            # if status is waiting
                             if status == "waiting":
+                                #do nth
                                 print("waiting")
 
-
-
+                            # if call is cancelled
                             if status == "timeout":
-                                # timer here
+                                # go back to contacts page
                                 print("timeout")
                                 self.signals.timeout.emit()
                                 # HI ANDY DO YOUR MAGIC HERE!!!
                                 break
 
-
+                        #logic for pausing the listener
                         if not self.listen_call:
                             break
 
-
-
+                        #perform this every 2 seconds
                         time.sleep(2)
 
-
-
+            # logic for pausing the listener
             if not self.listen_call:
                 print("we here bro?")
                 break
 
-            time.sleep(2)
-
-
-
-            
+            time.sleep(1)
 
     def listen_call_req_start(self):
         self.listen_call = True

@@ -174,9 +174,11 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.listen_req_thread.signals.timeout.connect(self.init_reject_call)
         self.listen_req_thread.start()
 
+        nickname = self.get_nickname()
         if online_users:
             for users in online_users:
-                self.display_contact_list.addItem(users)
+                if nickname != users:
+                    self.display_contact_list.addItem(users)
             
             # enable GUI upon completion
             self.display_contact_list.setEnabled(True)
@@ -247,7 +249,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.start_chat_pg(self.receiver_name, key, caller_ip, self.client_obj.ip)
 
     def stop_send_call(self):
-        print("rest")
+
 
         self.client_obj =  self.init_req_thread.retClient()
         self.init_req_thread.init_req_pause()
@@ -259,7 +261,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.init_req_thread.signals.reject.disconnect()
         self.init_req_thread.signals.timeout.disconnect()
 
-        self.client_obj.send_call_canc()
+        #self.client_obj.send_call_canc()
 
         self.stop_send_call_pg()
         self.start_contact_pg()
@@ -406,12 +408,17 @@ class UiMainWindow(QtWidgets.QMainWindow):
         #self.mute_button.clicked.connect(lambda: self.init_send_msg()) # andy if time persist then we do
         self.end_call_button.clicked.connect(lambda: self.init_end_call())
         self.change_page(4)
-        # port = 10001
-        # r = Receiver(host_ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
-        # port = 10002
-        # s = Sender(caller_ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
+        port = 10001
+        #r = Receiver(host_ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
+        port = 10002
+        s = Sender(caller_ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
         # r.wait_for_call()
         # s.call()
+
+        receiver = threading.Thread(target=Receiver, args=(host_ip, port, [1, 5, 3, 4, 0, 7, 2, 6],))
+        sender = threading.Thread(target=s.call)
+        receiver.start()
+        sender.start()
 
     def stop_chat_pg(self):
         self.display_name.setEnabled(False)

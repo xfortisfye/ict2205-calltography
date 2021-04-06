@@ -49,6 +49,13 @@ class Server_socket:
     def derive_aeskey(self):
         self.client_server_aes_key = cryptodriver.hkdf(16, self.shared_key.encode())
 
+    #removes user from the list of online users
+    def remove_user(self):
+        try:
+            online_users.remove(self.username)
+        except:
+            print("failed to remove username")
+
     def wait_auth(self):
         while True:
             msg = self.recv_msg()
@@ -77,6 +84,7 @@ class Server_socket:
                     print("Sent encrypted pubkey and sig\n\n")
                     return True
 
+
     def wait_exchange_ecdh(self):
         while True:
             msg = self.recv_msg()
@@ -101,6 +109,7 @@ class Server_socket:
                 print("ECDH exchange successful\n\n")
                 return True
 
+    #waits for user to enter username
     def wait_username_check(self):
         while True:
             if self.server_client_enc:
@@ -138,37 +147,18 @@ class Server_socket:
 
                     response = "header: SE_AVAIL_USERS content: " + username_list + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
                     self.send_enc_msg(response)
-                    # return True
+
 
                 # response to client listener
                 elif msg and msg_processor.get_header_field(msg) == "CHECK_INC_CALL_REQ":
                     self.incoming_call_request(msg)
 
                 elif msg and msg_processor.get_header_field(msg) == "INC_CALL_STATUS":
-                    print("inc calllllll")
+
                     self.call_status_check()
 
                 elif msg and msg_processor.get_header_field(msg) == "INC_CALL_REQ_RES":
-                    # checks if msg is a incoming call request response
-
-                    # get the user response
-                    call_response = msg_processor.get_content_field(msg)
-                    print("bbaaabaaaa")
-
-                    # if user acknowledges the call
-                    if call_response == "ack" and self.caller:
-                        call_requests_status[self.username] = "ack"
-                        self.call_target_exchange_ip_ecdh()
-
-                    elif call_response == "dec":
-                        call_requests_status[self.username] = "dec"
-                        print("call declined")
-
-                    elif call_response == "canc":
-                        call_requests_status[self.call_target] = "canc"
-                        print("call cancelled")
-
-                    call_requests[self.username] = False
+                    self.incoming_call_response_check(msg)
 
 
                 # client wants to call someone
@@ -212,30 +202,33 @@ class Server_socket:
             # send response
             self.send_enc_msg(response)
 
-            # # get user response
-            # msg = self.recv_enc_msg()
-            #
-            # # checks if msg is a incoming call request response
-            # if msg and msg_processor.get_header_field(msg) == "INC_CALL_REQ_RES":
-            #
-            #     # get the user response
-            #     call_response = msg_processor.get_content_field(msg)
-            #     print("sending req")
-            #
-            #     # if user acknowledges the call
-            #     if call_response == "ack" and self.caller:
-            #         call_requests_status[self.username] = "ack"
-            #         self.call_target_exchange_ip_ecdh()
-            #
-            #     elif call_response == "dec":
-            #         call_requests_status[self.username] = "dec"
-            #         print("called declined")
-            #
-            #     call_requests[self.username] = False
         else:
             response = "header: INC_CALL_REQ content: none [EOM]"
             self.send_enc_msg(response)
 
+
+    def incoming_call_response_check(self, msg):
+        # checks if msg is a incoming call request response
+
+        # get the user response
+        call_response = msg_processor.get_content_field(msg)
+
+        # if user acknowledges the call
+        if call_response == "ack" and self.caller:
+            call_requests_status[self.username] = "ack"
+            self.call_target_exchange_ip_ecdh()
+
+        # if user declines the call
+        elif call_response == "dec":
+            call_requests_status[self.username] = "dec"
+            print("call declined")
+
+        # if call is cancelled
+        elif call_response == "canc":
+            call_requests_status[self.call_target] = "canc"
+            print("call cancelled")
+
+        call_requests[self.username] = False
 
 
     def send_call_request(self, msg):
@@ -257,14 +250,12 @@ class Server_socket:
             while True:
 
                 msg = self.recv_enc_msg()
-                print(msg)
                 if msg and msg_processor.get_header_field(msg) == "CALL_REQ_STATUS":
                     status = msg_processor.get_content_field(msg)
-                    print("Status is: " + status)
+                    # check call status
                     if status == "ok":
-                        print("we pass")
                         pass #continue loopuing as per usual
-
+                    # elif status is cancelled
                     elif status == "canc":
                         call_requests_status[self.call_target] = "canc"
                         print("call cancelled")
@@ -297,10 +288,6 @@ class Server_socket:
                         #call_requests_status.pop(self.call_target)
                         break
 
-                    elif call_requests_status[self.call_target] == "canc":
-                        #call_requests_status.pop(self.caller)
-                        call_requests_status[self.call_target] = False
-                        break
 
                     else:
                         response = "header: CALL_REQ_RES content: waiting [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
@@ -310,10 +297,6 @@ class Server_socket:
                     time.sleep(0.5)
                     time_elapsed += 0.5
                     print("time left" + str(30-time_elapsed))
-
-
-
-
 
         else:
             # send user not found

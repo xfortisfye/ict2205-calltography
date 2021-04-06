@@ -15,6 +15,7 @@ class WorkerSignals(QtCore.QObject):
     reject = QtCore.pyqtSignal()
     timeout = QtCore.pyqtSignal()
 
+
 class InitRequestWorker(QtCore.QThread):
     def __init__(self, client, call_target):
         super(InitRequestWorker, self).__init__()
@@ -30,39 +31,40 @@ class InitRequestWorker(QtCore.QThread):
         '''
         Initialise the runner function with passed args, kwargs.
         '''
-            
+
         print("calling....")
 
-        response = "header: CALL_REQ content: " + self.call_target + " [EOM]"  # msg structure smt like header=purpose of msg
+        response = "header: CALL_REQ content: " + self.call_target + " [EOM]"
         response = self.client.encrypt_content(response)
         self.client.send_msg(response)
-        #self.signals.call_target.emit(self.call_target)  # Return the result of the processing
+        # self.signals.call_target.emit(self.call_target)  # Return the result of the processing
         self.signals.start_timer.emit()
 
         while True:
 
-
-            print(self.listen_call)
+            # logic for stopping init_req worker (this is when the user cancels the call
             if not self.listen_call:
-                response = "header: CALL_REQ_STATUS content: canc [EOM]"  # msg structure smt like header=purpose of msg
+                response = "header: CALL_REQ_STATUS content: canc [EOM]"
                 response = self.client.encrypt_content(response)
                 self.client.send_msg(response)
-                print("SENT!!!")
-                time.sleep(1)
                 break
 
-
-            response = "header: CALL_REQ_STATUS content: ok [EOM]"  # msg structure smt like header=purpose of msg
+            # send call_req_status to server
+            response = "header: CALL_REQ_STATUS content: ok [EOM]"
             response = self.client.encrypt_content(response)
             self.client.send_msg(response)
 
-
+            # get server response
             msg = self.client.recv_msg()
             msg = self.client.decrypt_content(msg)
+
             if msg and msg_processor.get_header_field(msg) == "CALL_REQ_RES":
                 response = msg_processor.get_content_field(msg)
+
+                # if response is ack means recipient has accepted the call
                 if response == "ack":
-                    print("ack")
+
+                    # perform ip exchange and ECDH exchange
                     msg = self.client.recv_msg()
                     msg = self.client.decrypt_content(msg)
 
@@ -72,42 +74,52 @@ class InitRequestWorker(QtCore.QThread):
 
                         key_obj = cryptodriver.make_dhe_key_obj()
                         own_public_key = cryptodriver.make_dhe_keypair(key_obj)
-
                         msg = self.client.recv_msg()
                         msg = self.client.decrypt_content(msg)
                         print(msg)
+
                         if msg_processor.get_header_field(msg) == "CALL_PUB_KEY":
+
                             recipient_public_key = msg_processor.get_content_field(msg)
                             key_obj = cryptodriver.make_dhe_key_obj()
                             own_public_key = cryptodriver.make_dhe_keypair(key_obj)
-                            response = "header: CALL_PUB_KEY content: " + own_public_key + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
+                            response = "header: CALL_PUB_KEY content: " + own_public_key + " [EOM]"
+
                             response = self.client.encrypt_content(response)
                             self.client.send_msg(response)
                             shared_key = cryptodriver.make_dhe_sharedkey(key_obj, recipient_public_key)
                             self.signals.call_accepted.emit(shared_key, caller_ip)
-                            print("Shared: key is: "+shared_key)
+                            print("Shared: key is: " + shared_key)
                             break
-                if response == "dec":
+
+                # if response is dec means recipient has declined the call
+                elif response == "dec":
+                    # go back to contacts page
                     print("dec")
                     self.signals.reject.emit()
                     # HI ANDY DO YOUR MAGIC HERE!!!
                     break
-                if response == "waiting":
+
+                # if waiting means recipient still has not responded
+                elif response == "waiting":
+                    # do nth
                     print("waiting")
 
-                if response == "timeout":
+                # if timeout means call has timeout
+                elif response == "timeout":
+                    # go back to contacts page
                     self.signals.timeout.emit()
                     print("timeout")
                     # HI ANDY DO YOUR MAGIC HERE!!!
                     break
 
+            time.sleep(1)
 
     def init_req_start(self):
         self.listen_call = True
 
     def init_req_pause(self):
         self.listen_call = False
-
 
     # return client object
     def retClient(self):
@@ -116,4 +128,3 @@ class InitRequestWorker(QtCore.QThread):
     # insert client object
     def insertClient(self, client):
         self.client = client
-

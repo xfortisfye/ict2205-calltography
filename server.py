@@ -6,7 +6,6 @@ user_ip_dict = {}
 import threading
 
 
-
 def multi_threaded_controller(connection):
 
 
@@ -26,7 +25,6 @@ def multi_threaded_controller(connection):
     else:
         proceed = False
 
-
     if proceed:
         print("=================================")
         print("Wait for client to start ECDH exchange")
@@ -45,16 +43,15 @@ def multi_threaded_controller(connection):
         else:
             proceed = False
 
-    # listen_call_requests = threading.Thread(target=server.listen_call_req)
-    # listen_call_requests.start()
 
-
-    if proceed:
-        if(server.wait_call_select()):
-            pass
+    try:
+        if proceed:
+            if(server.wait_call_select()):
+                pass
+    except socket.error as e:
+        server.remove_user()
 
     connection.close()
-
 
 
 
