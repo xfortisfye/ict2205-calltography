@@ -49,7 +49,7 @@ class Server_socket:
     def derive_aeskey(self):
         self.client_server_aes_key = cryptodriver.hkdf(16, self.shared_key.encode())
 
-    #removes user from the list of online users
+    # removes user from the list of online users
     def remove_user(self):
         try:
             online_users.remove(self.username)
@@ -59,31 +59,52 @@ class Server_socket:
     def wait_auth(self):
         while True:
             msg = self.recv_msg()
+
+            msg = cryptodriver.decrypt_rsa_aes(open('server_rsa_priv_key.pem').read(), msg).decode('utf-8')
+
             if msg_processor.get_header_field(msg) == "SE_AUTH_REQ":
                 print("\n\n")
                 print("=================================")
                 print("Received AUTH request")
                 print("=================================")
 
-                recipient_key = msg_processor.get_content_field(msg).encode("ISO-8859-1")
+                content = msg_processor.get_content_field(msg).split("{\n}")
+
+                recipient_key = content[0].encode("ISO-8859-1")
+
+                recipient_ecdh = content[1]
 
                 if recipient_key:
                     response = "header: SE_AUTH_REQ_RES content: ok [EOM]"
                     self.send_msg(response)
 
+                    # gen rsa keypair
                     keypair = cryptodriver.get_rsa_keypair()
-                    own_private_key = keypair[0]
-                    own_public_key = keypair[1]
+                    own_rsa_private_key = keypair[0]
+                    own_rsa_public_key = keypair[1]
                     message = "place holder"
-                    signature = cryptodriver.make_rsa_sig(own_private_key, message)
-                    payload = own_public_key.decode("ISO-8859-1") + "{\n}" + signature.decode("ISO-8859-1")
+
+                    key_obj = cryptodriver.make_dhe_key_obj()
+                    own_dhe_public_key = cryptodriver.make_dhe_keypair(key_obj)
+
+                    signature = cryptodriver.make_rsa_sig(own_rsa_private_key, message)
+                    payload = own_rsa_public_key.decode("ISO-8859-1") + "{\n}" + signature.decode(
+                        "ISO-8859-1") + "{\n}" + own_dhe_public_key
 
                     encrypted_payload = cryptodriver.encrypt_rsa_aes(recipient_key, payload)
                     response = "header: SE_AUTH_SIG_KEY content: " + encrypted_payload + " [EOM]"
                     self.send_msg(response)
-                    print("Sent encrypted pubkey and sig\n\n")
-                    return True
 
+                    self.shared_key = cryptodriver.make_dhe_sharedkey(key_obj, recipient_ecdh)
+                    print("Client pub key is " + recipient_ecdh)
+                    print("Server pub key is: " + own_dhe_public_key)
+                    print("Server shared key is: " + self.shared_key)
+                    self.server_client_enc = True
+                    self.derive_aeskey()
+
+                    print("Auth done\n\n")
+
+                    return True
 
     def wait_exchange_ecdh(self):
         while True:
@@ -109,7 +130,7 @@ class Server_socket:
                 print("ECDH exchange successful\n\n")
                 return True
 
-    #waits for user to enter username
+    # waits for user to enter username
     def wait_username_check(self):
         while True:
             if self.server_client_enc:
@@ -165,19 +186,18 @@ class Server_socket:
                 elif msg and msg_processor.get_header_field(msg) == "CALL_REQ":
                     self.send_call_request(msg)
 
-
     def call_status_check(self):
 
         if call_requests_status[self.username] == "canc":
             response = "header: INC_CALL_STATUS_RES content: canc [EOM]"
-            #call_requests_status.pop(self.caller)
+            # call_requests_status.pop(self.caller)
             call_requests_status[self.caller] = False
             call_requests[self.username] = False
 
 
         elif call_requests_status[self.username] == "timeout":
             response = "header: INC_CALL_STATUS_RES content: timeout [EOM]"
-           # call_requests_status.pop(self.caller)
+            # call_requests_status.pop(self.caller)
             call_requests_status[self.caller] = False
             call_requests[self.username] = False
 
@@ -185,8 +205,6 @@ class Server_socket:
             response = "header: INC_CALL_STATUS_RES content: waiting [EOM]"
         print("sending : " + response)
         self.send_enc_msg(response)
-
-
 
     def incoming_call_request(self, msg):
         # checks if call_request has been set (aka check if there is anyone wanting to call the user)
@@ -205,7 +223,6 @@ class Server_socket:
         else:
             response = "header: INC_CALL_REQ content: none [EOM]"
             self.send_enc_msg(response)
-
 
     def incoming_call_response_check(self, msg):
         # checks if msg is a incoming call request response
@@ -230,7 +247,6 @@ class Server_socket:
 
         call_requests[self.username] = False
 
-
     def send_call_request(self, msg):
         # get call_target
         self.call_target = msg_processor.get_content_field(msg)
@@ -254,7 +270,7 @@ class Server_socket:
                     status = msg_processor.get_content_field(msg)
                     # check call status
                     if status == "ok":
-                        pass #continue loopuing as per usual
+                        pass  # continue loopuing as per usual
                     # elif status is cancelled
                     elif status == "canc":
                         call_requests_status[self.call_target] = "canc"
@@ -276,7 +292,7 @@ class Server_socket:
                         response = "header: CALL_REQ_RES content: ack [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
                         self.send_enc_msg(response)
                         self.caller_exchange_ip_ecdh()
-                        #call_requests_status.pop(self.call_target)
+                        # call_requests_status.pop(self.call_target)
                         call_requests_status[self.call_target] = False
                         break
 
@@ -285,7 +301,7 @@ class Server_socket:
                         response = "header: CALL_REQ_RES content: dec [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
                         self.send_enc_msg(response)
 
-                        #call_requests_status.pop(self.call_target)
+                        # call_requests_status.pop(self.call_target)
                         break
 
 
@@ -293,10 +309,9 @@ class Server_socket:
                         response = "header: CALL_REQ_RES content: waiting [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
                         self.send_enc_msg(response)
 
-
                     time.sleep(0.5)
                     time_elapsed += 0.5
-                    print("time left" + str(30-time_elapsed))
+                    print("time left" + str(30 - time_elapsed))
 
         else:
             # send user not found

@@ -18,8 +18,6 @@ class Client:
 
         self.listen_call = True
 
-
-
     def send_msg(self, msg):
         self.socket.send(str.encode(msg))
 
@@ -52,12 +50,22 @@ class Client:
                 print("socket closed")
                 return False
 
+            # gen rsa keypair
             keypair = cryptodriver.get_rsa_keypair()
-            own_private_key = keypair[0]
-            own_public_key = keypair[1]
+            own_rsa_private_key = keypair[0]
+            own_rsa_public_key = keypair[1]
 
-            response = "header: SE_AUTH_REQ content: " + own_public_key.decode(
-                "ISO-8859-1") + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
+            # ecdh
+            key_obj = cryptodriver.make_dhe_key_obj()
+            own_dhe_public_key = cryptodriver.make_dhe_keypair(key_obj)
+
+            # build response
+            response = "header: SE_AUTH_REQ content: " + own_rsa_public_key.decode(
+                "ISO-8859-1") + "{\n}" + own_dhe_public_key + " [EOM]"
+
+            # encrypt with server public key
+            response = cryptodriver.encrypt_rsa_aes(open('server_rsa_pub_key.pem').read(), response)
+
             self.send_msg(response)
 
             msg = self.recv_msg()
@@ -65,19 +73,31 @@ class Client:
             if msg_processor.get_header_field(msg) == "SE_AUTH_REQ_RES":
                 if msg_processor.get_content_field(msg) == "ok":
                     print("SE_AUTH_REQ successfully sent")
-                    # receive server sig & key encrypted with own public key
+                    # receive server sig & pub rsa key & ecdh key encrypted with own public key
                     msg = self.recv_msg()
 
                     if msg_processor.get_header_field(msg) == "SE_AUTH_SIG_KEY":
                         encrypted_data = msg_processor.get_content_field(msg)
                         if encrypted_data:
-                            key_sig = cryptodriver.decrypt_rsa_aes(own_private_key, encrypted_data).decode(
+                            key_sig = cryptodriver.decrypt_rsa_aes(own_rsa_private_key, encrypted_data).decode(
                                 "utf-8").split("{\n}")
                             server_key = key_sig[0].encode("ISO-8859-1")
                             server_sig = key_sig[1].encode("ISO-8859-1")
+
+                            recipient_public_key = key_sig[2]
                             server_auth = cryptodriver.verify_rsa_sig(server_key, "place holder", server_sig)
                             if server_auth:
-                                print("server verification success")
+
+
+                                self.shared_key = cryptodriver.make_dhe_sharedkey(key_obj, recipient_public_key)
+                                print("Server pub key is " + recipient_public_key)
+                                print("Client pub key is: " + own_dhe_public_key)
+                                print("Client shared key is: " + self.shared_key)
+                                self.server_client_enc = True
+                                self.derive_aeskey()
+
+                                print("Server auth done")
+
                                 return True
                             else:
                                 print("server verification failed retrying..")
@@ -145,7 +165,6 @@ class Client:
         else:
             return None
 
-
     def initiate_call_req(self, call_target):
         print("calling....")
 
@@ -158,6 +177,3 @@ class Client:
         response = self.encrypt_content(response)
 
         self.send_msg(response)
-
-
-

@@ -18,10 +18,10 @@ import pyDHE
 #     key = RSA.generate(2048)
 #     private_key = key.export_key()
 #     public_key = key.public_key().export_key()
-#     file_out = open("server_rsa_private_key.pem", "wb")
+#     file_out = open("server_rsa_priv_key.pem", "wb")
 #     file_out.write(private_key)
 #     file_out.close()
-#     file_out = open("pub_key.pem", "wb")
+#     file_out = open("server_rsa_pub_key.pem", "wb")
 #     file_out.write(public_key)
 #     file_out.close()
 #     return [private_key, public_key]
@@ -98,7 +98,7 @@ def get_rsa_keypair():
 ##PKCS#1 PSS (RSA)
 # def make_rsa_sig():
 #     message = "To be signed"
-#     key = RSA.import_key(open('server_rsa_private_key.pem').read())
+#     key = RSA.import_key(open('server_rsa_priv_key.pem').read())
 #     h = SHA256.new(message.encode())
 #     signature = pss.new(key).sign(h)
 #     return signature

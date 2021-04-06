@@ -520,15 +520,5 @@ class UiMainWindow(QtWidgets.QMainWindow):
                 proceed = False
                 return "Server authentication failed"
 
-            # perform ecdh exchange
-            if proceed:
-                print("=================================")
-                print("Performing ECDH exchange")
-                print("=================================")
-                if (self.client_obj.exchange_ecdh()):
-                    print("ECDH exchange successful\n\n")
-                    return None
-                else:
-                    return "ECDH exchange failed"
         else:
             return "Failed to connect to server"

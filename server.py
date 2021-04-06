@@ -25,14 +25,6 @@ def multi_threaded_controller(connection):
     else:
         proceed = False
 
-    if proceed:
-        print("=================================")
-        print("Wait for client to start ECDH exchange")
-        print("=================================")
-        if(server.wait_exchange_ecdh()):
-            print("ECDH exchange successful\n\n")
-        else:
-            proceed = False
 
     if proceed:
         print("=================================")
