@@ -169,7 +169,6 @@ class Server_socket:
                     response = "header: SE_AVAIL_USERS content: " + username_list + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
                     self.send_enc_msg(response)
 
-
                 # response to client listener
                 elif msg and msg_processor.get_header_field(msg) == "CHECK_INC_CALL_REQ":
                     self.incoming_call_request(msg)
@@ -180,7 +179,6 @@ class Server_socket:
 
                 elif msg and msg_processor.get_header_field(msg) == "INC_CALL_REQ_RES":
                     self.incoming_call_response_check(msg)
-
 
                 # client wants to call someone
                 elif msg and msg_processor.get_header_field(msg) == "CALL_REQ":

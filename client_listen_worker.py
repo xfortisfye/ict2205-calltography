@@ -128,7 +128,7 @@ class ClientListenWorker(QtCore.QThread):
 
         # Close connection
         try:
-            self.role.sock.shutdown(socket.SHUT_RDWR)
+            #self.role.sock.shutdown(socket.SHUT_RDWR)
             self.role.sock.close()
             print("listen client: shutdown nicely" )
         except:
