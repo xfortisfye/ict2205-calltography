@@ -11,7 +11,7 @@ class WorkerSignals(QtCore.QObject):
     progress = QtCore.pyqtSignal(int)
 
 
-class ServerAuthWorker(QtCore.QThread):
+class ServerAuthWorker(QtCore.QRunnable):
     def __init__(self, fn, *args, **kwargs):
         super(ServerAuthWorker, self).__init__()
 

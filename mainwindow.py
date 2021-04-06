@@ -48,6 +48,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         
         # threading stuff
         self.counter = None
+        self.threadpool = QtCore.QThreadPool()
         self.server_auth_thread = None
         self.listen_req_thread = None
         self.init_req_thread = None
@@ -76,17 +77,36 @@ class UiMainWindow(QtWidgets.QMainWindow):
     def init_intro(self):
         self.init_intro_button.clicked.disconnect()
         
-        self.timer = QtCore.QTimer()
-        self.timer.setInterval(1000)
+        self.loading_timer = QtCore.QTimer()
+        self.loading_timer.setInterval(1000)
         self.counter = 1
-        self.timer.timeout.connect(self.init_loading_timer)
-        self.timer.start()
+        self.loading_timer.timeout.connect(self.print_loading_timer)
+        self.loading_timer.start()
         
         self.server_auth_thread = ServerAuthWorker(self.startServerAuth)
         self.server_auth_thread.signals.result.connect(self.serverAuthResult)
-        self.server_auth_thread.start()
-        self.server_auth_thread.wait()
-        self.server_auth_thread.exit()
+        self.threadpool.start(self.server_auth_thread)
+
+    def print_loading_timer(self):
+        self.init_error_msg.setStyleSheet("QLabel {color: black;}")
+
+        dot_string = ""
+        for _ in range(self.counter):
+            dot_string += "."
+        self.init_error_msg.setText("Loading " + dot_string)
+        self.counter += 1
+
+        if self.counter > 3:
+            self.counter = 1
+
+    def serverAuthResult(self, error):
+        self.loading_timer.stop()
+        if error:
+            self.init_intro_button.clicked.connect(lambda: self.init_intro())
+            self.init_error_msg.setStyleSheet("QLabel {color: red;}")
+            self.init_error_msg.setText(error)
+        else:
+            self.stop_intro_pg()
 
     def set_nickname(self):
         if self.input_nickname.text():
@@ -95,8 +115,8 @@ class UiMainWindow(QtWidgets.QMainWindow):
             # update server the nickname
             if self.client_obj.set_username(self.get_nickname()):
                 # disconnect unused signals
+                self.loading_timer.timeout.disconnect()
                 self.server_auth_thread.signals.result.disconnect()
-                self.timer.timeout.disconnect()
 
                 #start listen for request thread
                 self.listen_req_thread = ListenRequestWorker(self.client_obj)
@@ -251,15 +271,6 @@ class UiMainWindow(QtWidgets.QMainWindow):
     def init_receive_call(self, caller_name):
         self.sender_name = caller_name
 
-        #HI ANDY I SHIFTED THIS CHUNK BELOW TO INTI ACCPET CALL
-        #cause we want to still keep the listener active even when they recieve the call reqeust
-        # we only want to stop it when the user accepts the call
-        # self.client_obj = self.listen_req_thread.retClient()
-        # self.listen_req_thread.listen_call_req_pause()
-        # self.listen_req_thread.wait()
-        # self.listen_req_thread.exit()
-        #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
         self.stop_contact_pg()
         self.start_recv_call_pg()
         
@@ -269,9 +280,17 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.receive_timer.timeout.connect(lambda caller_name=caller_name: self.print_recv_timer(caller_name))
         self.receive_timer.start()
 
-    def init_accept_call(self):
+    def print_recv_timer(self, caller_name):
+        dot_string = ""
+        for _ in range(self.counter):
+            dot_string += "."
+        self.recv_call_text.setText(caller_name + "\nis calling" + dot_string)
+        self.counter += 1
 
-        # HI ANDY I SHIFTED THIS CHUNK BELOW TO INTI ACCPET CALL
+        if self.counter > 3:
+            self.counter = 1
+
+    def init_accept_call(self):
         self.client_obj = self.listen_req_thread.retClient()
         self.listen_req_thread.listen_call_req_pause()
         self.listen_req_thread.wait()
@@ -292,9 +311,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         
     def init_reject_call(self):
         # perform all the actions to process reject call
-        print ("hello")
         self.client_obj.send_call_dec()
-        print ("helloooo")
         self.stop_recv_call_pg()
         self.start_contact_pg()
 
@@ -470,38 +487,3 @@ class UiMainWindow(QtWidgets.QMainWindow):
                     return "ECDH exchange failed"
         else:
             return "Failed to connect to server"
-
-
-    def init_loading_timer(self):
-        self.init_error_msg.setStyleSheet("QLabel {color: black;}")
-
-        dot_string = ""
-        for _ in range(self.counter):
-            dot_string += "."
-        self.init_error_msg.setText("Loading " + dot_string)
-        self.counter += 1
-
-        if self.counter > 3:
-            self.counter = 1
-
-    def serverAuthResult(self, error):
-        self.timer.stop()
-        if error:
-            self.init_intro_button.clicked.connect(lambda: self.init_intro())
-            self.init_error_msg.setStyleSheet("QLabel {color: red;}")
-            self.init_error_msg.setText(error)
-        else:
-            self.stop_intro_pg()
-
-    # def init_call_recv_timer(self, caller_name):
-        
-    
-    def print_recv_timer(self, caller_name):
-        dot_string = ""
-        for _ in range(self.counter):
-            dot_string += "."
-        self.recv_call_text.setText(caller_name + "\nis calling" + dot_string)
-        self.counter += 1
-
-        if self.counter > 3:
-            self.counter = 1
