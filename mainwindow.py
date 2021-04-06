@@ -216,7 +216,20 @@ class UiMainWindow(QtWidgets.QMainWindow):
 
     def stop_send_call(self):
             # perform all the actions to process stop call
-        self.stop_send_call_pg()    
+        print("rest")
+
+        self.client_obj =  self.init_req_thread.retClient()
+        self.init_req_thread.init_req_pause()
+        self.init_req_thread.wait()
+        self.init_req_thread.exit()
+        self.send_timer.timeout.disconnect()
+        self.init_req_thread.signals.start_timer.disconnect()
+        self.init_req_thread.signals.call_accepted.disconnect()
+
+        self.client_obj.send_call_canc()
+
+
+        self.stop_send_call_pg()
         self.start_contact_pg()
 
     '''
@@ -226,10 +239,14 @@ class UiMainWindow(QtWidgets.QMainWindow):
     def init_receive_call(self, caller_name):
         self.sender_name = caller_name
 
-        self.client_obj = self.listen_req_thread.retClient()
-        self.listen_req_thread.listen_call_req_pause()
-        self.listen_req_thread.wait()
-        self.listen_req_thread.exit()
+        #HI ANDY I SHIFTED THIS CHUNK BELOW TO INTI ACCPET CALL
+        #cause we want to still keep the listener active even when they recieve the call reqeust
+        # we only want to stop it when the user accepts the call
+        # self.client_obj = self.listen_req_thread.retClient()
+        # self.listen_req_thread.listen_call_req_pause()
+        # self.listen_req_thread.wait()
+        # self.listen_req_thread.exit()
+        #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         self.stop_contact_pg()
         self.start_recv_call_pg()
@@ -239,8 +256,15 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.counter = 1
         self.receive_timer.timeout.connect(lambda caller_name=caller_name: self.print_recv_timer(caller_name))
         self.receive_timer.start()
-        
+
     def init_accept_call(self):
+
+        # HI ANDY I SHIFTED THIS CHUNK BELOW TO INTI ACCPET CALL
+        self.client_obj = self.listen_req_thread.retClient()
+        self.listen_req_thread.listen_call_req_pause()
+        self.listen_req_thread.wait()
+        self.listen_req_thread.exit()
+
         self.send_ack_thread = SendAckWorker(self.client_obj)
         self.send_ack_thread.signals.call_accepted.connect(self.post_accept_call)
         self.send_ack_thread.start()

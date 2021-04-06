@@ -133,10 +133,11 @@ class Client:
 
             response = "header: SE_AVAIL_USERS_REQ content: ok [EOM]"  # msg structure smt like header=purpose of msg
             self.send_enc_msg(response)
-
+            print("test 2")
             # receive response
             msg = self.recv_enc_msg()
-
+            print("test 3")
+            print(msg)
             # check if username is accepted by the server
             if msg and msg_processor.get_header_field(msg) == "SE_AVAIL_USERS":
                 avail_user_list = msg_processor.get_content_field(msg).split("{\n}")
@@ -159,4 +160,7 @@ class Client:
         response = self.encrypt_content(response)
 
         self.send_msg(response)
-        print("called declined")
+
+    def send_call_canc(self):
+        pass
+

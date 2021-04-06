@@ -141,12 +141,60 @@ class Server_socket:
                     # return True
 
                 # response to client listener
-                if msg and msg_processor.get_header_field(msg) == "CHECK_INC_CALL_REQ":
+                elif msg and msg_processor.get_header_field(msg) == "CHECK_INC_CALL_REQ":
                     self.incoming_call_request(msg)
+
+                elif msg and msg_processor.get_header_field(msg) == "INC_CALL_STATUS":
+                    print("inc calllllll")
+                    self.call_status_check()
+
+                elif msg and msg_processor.get_header_field(msg) == "INC_CALL_REQ_RES":
+                    # checks if msg is a incoming call request response
+
+                    # get the user response
+                    call_response = msg_processor.get_content_field(msg)
+                    print("bbaaabaaaa")
+
+                    # if user acknowledges the call
+                    if call_response == "ack" and self.caller:
+                        call_requests_status[self.username] = "ack"
+                        self.call_target_exchange_ip_ecdh()
+
+                    elif call_response == "dec":
+                        call_requests_status[self.username] = "dec"
+                        print("call declined")
+
+                    elif call_response == "canc":
+                        call_requests_status[self.call_target] = "canc"
+                        print("call cancelled")
+
+                    call_requests[self.username] = False
+
 
                 # client wants to call someone
                 elif msg and msg_processor.get_header_field(msg) == "CALL_REQ":
                     self.send_call_request(msg)
+
+
+    def call_status_check(self):
+
+        if call_requests_status[self.username] == "canc":
+            response = "header: INC_CALL_STATUS_RES content: canc [EOM]"
+            call_requests_status.pop(self.caller)
+            call_requests[self.username] = False
+
+
+        elif call_requests_status[self.username] == "timeout":
+            response = "header: INC_CALL_STATUS_RES content: timeout [EOM]"
+            call_requests_status.pop(self.caller)
+            call_requests[self.username] = False
+
+        else:
+            response = "header: INC_CALL_STATUS_RES content: waiting [EOM]"
+        print("sending : " + response)
+        self.send_enc_msg(response)
+
+
 
     def incoming_call_request(self, msg):
         # checks if call_request has been set (aka check if there is anyone wanting to call the user)
@@ -162,29 +210,31 @@ class Server_socket:
             # send response
             self.send_enc_msg(response)
 
-            # get user response
-            msg = self.recv_enc_msg()
-
-            # checks if msg is a incoming call request response
-            if msg and msg_processor.get_header_field(msg) == "INC_CALL_REQ_RES":
-
-                # get the user response
-                call_response = msg_processor.get_content_field(msg)
-                print("sending req")
-
-                # if user acknowledges the call
-                if call_response == "ack" and self.caller:
-                    call_requests_status[self.username] = "ack"
-                    self.call_target_exchange_ip_ecdh()
-
-                elif call_response == "dec":
-                    call_requests_status[self.username] = "dec"
-                    print("called declined")
-
-                call_requests[self.username] = False
+            # # get user response
+            # msg = self.recv_enc_msg()
+            #
+            # # checks if msg is a incoming call request response
+            # if msg and msg_processor.get_header_field(msg) == "INC_CALL_REQ_RES":
+            #
+            #     # get the user response
+            #     call_response = msg_processor.get_content_field(msg)
+            #     print("sending req")
+            #
+            #     # if user acknowledges the call
+            #     if call_response == "ack" and self.caller:
+            #         call_requests_status[self.username] = "ack"
+            #         self.call_target_exchange_ip_ecdh()
+            #
+            #     elif call_response == "dec":
+            #         call_requests_status[self.username] = "dec"
+            #         print("called declined")
+            #
+            #     call_requests[self.username] = False
         else:
             response = "header: INC_CALL_REQ content: none [EOM]"
             self.send_enc_msg(response)
+
+
 
     def send_call_request(self, msg):
         # get call_target
@@ -201,38 +251,65 @@ class Server_socket:
 
             # check shared memory for call status timeout 30 seconds
             time_elapsed = 0
+
             while True:
-                # if timeout
-                if time_elapsed >= 30:
-                    response = "header: CALL_REQ_RES content: timeout [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
-                    self.send_enc_msg(response)
-                    call_requests_status.pop(self.call_target)
-                    break
 
-                # if call_target has acknowledged
-                elif call_requests_status[self.call_target] == "ack":
-                    # build
-                    print("acked")
-                    response = "header: CALL_REQ_RES content: ack [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
-                    self.send_enc_msg(response)
-                    self.caller_exchange_ip_ecdh()
-                    call_requests_status.pop(self.call_target)
-                    break
+                msg = self.recv_enc_msg()
+                print(msg)
+                if msg and msg_processor.get_header_field(msg) == "CALL_REQ_STATUS":
+                    status = msg_processor.get_content_field(msg)
+                    print("Status is: " + status)
+                    if status == "ok":
+                        print("we pass")
+                        pass #continue loopuing as per usual
 
-                # else if call_target has declined
-                elif call_requests_status[self.call_target] == "dec":
-                    response = "header: CALL_REQ_RES content: dec [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
-                    self.send_enc_msg(response)
-                    call_requests_status.pop(self.call_target)
-                    break
+                    elif status == "canc":
+                        call_requests_status[self.call_target] = "canc"
+                        print("call cancelled")
+                        #
+                        break
 
-                else:
-                    response = "header: CALL_REQ_RES content: waiting [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
-                    self.send_enc_msg(response)
+                    # if timeout
+                    if time_elapsed >= 30:
+                        response = "header: CALL_REQ_RES content: timeout [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
+                        self.send_enc_msg(response)
+                        call_requests_status[self.call_target] = 'timeout'
+                        break
 
-                time.sleep(0.5)
-                time_elapsed += 0.5
-                print("time left" + str(30-time_elapsed))
+                    # if call_target has acknowledged
+                    elif call_requests_status[self.call_target] == "ack":
+                        # build
+                        print("acked")
+                        response = "header: CALL_REQ_RES content: ack [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
+                        self.send_enc_msg(response)
+                        self.caller_exchange_ip_ecdh()
+                        call_requests_status.pop(self.call_target)
+                        break
+
+                    # else if call_target has declined
+                    elif call_requests_status[self.call_target] == "dec":
+                        response = "header: CALL_REQ_RES content: dec [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
+                        self.send_enc_msg(response)
+
+                        call_requests_status.pop(self.call_target)
+                        break
+
+                    elif call_requests_status[self.call_target] == "canc":
+                        call_requests_status.pop(self.caller)
+                        break
+
+                    else:
+                        response = "header: CALL_REQ_RES content: waiting [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
+                        self.send_enc_msg(response)
+
+
+                    time.sleep(0.5)
+                    time_elapsed += 0.5
+                    print("time left" + str(30-time_elapsed))
+
+
+
+
 
         else:
             # send user not found
