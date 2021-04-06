@@ -416,12 +416,11 @@ class UiMainWindow(QtWidgets.QMainWindow):
 
     def start_chat_pg(self, name, key, ip, role):
         self.display_name.setEnabled(True)
-        self.display_name.setText("😀😀😀😀😀 " + name + " 😀😀😀😀😀")
+        self.display_name.setText("😃 " + name + " 😄")
         self.display_msg.setEnabled(True)
         self.input_msg.setEnabled(True)
         self.send_msg_button.setEnabled(True)
         self.mute_button.setEnabled(True)
-        #self.mute_button.clicked.connect(lambda: self.init_send_msg()) # andy if time persist then we do
         self.change_page(4)
 
         port = 10001 
@@ -468,7 +467,6 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.send_msg_button.setEnabled(False)
         self.mute_button.setEnabled(False)
         self.send_msg_button.clicked.disconnect()
-        #self.mute_button.clicked.disconnect() # andy if time persist then we do
         self.end_call_button.clicked.disconnect()
         self.model.clear()
         self.start_contact_pg()
