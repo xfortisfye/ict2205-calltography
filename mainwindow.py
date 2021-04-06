@@ -429,7 +429,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
             self.messenger_thread = MessengerWorker("sender", self.sender)
             self.messenger_thread.start()
             self.messenger_thread.wait()
-            self.sender = self.messenger_thread.retSender()
+            self.sender = self.messenger_thread.retMessenger()
             
             self.listen_thread = ClientListenWorker(self.sender)
             self.listen_thread.signals.message_received.connect(self.display_recv_msg)
@@ -446,7 +446,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
             self.messenger_thread = MessengerWorker("receiver", self.receiver)
             self.messenger_thread.start()
             self.messenger_thread.wait()
-            self.receiver = self.messenger_thread.retReceiver()
+            self.receiver = self.messenger_thread.retMessenger()
            
             self.listen_thread = ServerListenWorker(self.receiver)
             self.listen_thread.signals.message_received.connect(self.display_recv_msg)

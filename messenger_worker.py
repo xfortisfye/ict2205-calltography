@@ -30,9 +30,6 @@ class MessengerWorker(QtCore.QThread):
             self.messenger.reset_global_variables_speak()
             self.messenger.wait_for_call()
               
-    # return client object
-    def retSender(self):
-        return self.messenger
-    
-    def retReceiver(self):
+    # return sender/receiver object
+    def retMessenger(self):
         return self.messenger
