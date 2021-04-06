@@ -351,7 +351,7 @@ class Receiver:
 
 
 if __name__ == '__main__':
-    host = '192.168.0.111'
+    host = '127.0.0.1'
     port = 10001
 
     r = Receiver(host, port, [1, 5, 3, 4, 0, 7, 2, 6])
