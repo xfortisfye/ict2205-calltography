@@ -5,8 +5,7 @@ import threading
 import time
 import hashlib
 
-
-class Receiver:
+class Receiver():
     ##### Socket Variables #####
     host = ''
     port = ''
@@ -50,14 +49,18 @@ class Receiver:
     output_stream = None
 
 
-    def __init__(self, host, port, key):
+    def __init__(self):
+        self.host = None
+        self.port = None
+        self.key = None
+
+    def set_details(self, host, port, key):
         self.host = host
         self.port = port
         self.key = key
 
         self.sock.bind((self.host, self.port))
         self.sock.listen()
-
 
     def reset_global_variables_listen(self):
         self.key_counter_decode = 0
@@ -111,222 +114,6 @@ class Receiver:
         self.output_stream = p.open(format=self.FORMAT,
                                output=True, rate=self.RATE, channels=self.CHANNELS,
                                frames_per_buffer=self.OUTPUT_BUFFER)
-
-        listen_thread = threading.Thread(target=self.listen)
-        listen_thread.start()
-
-        speak_thread = threading.Thread(target=self.speak)
-        speak_thread.start()
-
-    def listen(self):
-        while not self.end_call:
-            try:
-                data = self.client.recv(self.OUTPUT_BUFFER)
-                if data:
-                    self.output_stream.write(data)
-                    current_index = 0
-
-                    # Not currently collecting data then...
-                    if not self.collecting_data:
-
-                        # Search for 00001111 to signify start of message
-                        for i in range(8):
-                            if data[i] == int('00001111', 2):
-                                self.blank_counter += 1
-                                current_index += 1
-                            else:
-                                self.blank_counter = 0
-                                current_index += 1
-                        if self.blank_counter == 8:
-                            self.collecting_data = True
-
-                    # if collecting data
-                    if self.collecting_data:
-
-                        # keep collecting data until finding 8 x 00001111 or until end of packet
-                        while self.mid_counter_decode < 8 and current_index < 4096:
-                            if data[current_index] == int('00001111', 2):
-                                self.message_bytes += bytes({data[current_index]})
-                                self.mid_counter_decode += 1
-                            else:
-                                self.message_bytes += bytes({data[current_index]})
-                                self.mid_counter_decode = 0
-
-                            current_index += 1
-
-                        # if end pattern is found then stop collecting data
-                        if self.mid_counter_decode == 8:
-                            self.finished_message = True
-
-                        if self.finished_message:
-                            # keep collecting data until finding 8 x 00001111 or until end of packet
-                            while self.end_counter_decode < 8 and current_index < 4096:
-                                if data[current_index] == int('00001111', 2):
-                                    self.message_digest_bytes += bytes({data[current_index]})
-                                    self.end_counter_decode += 1
-                                else:
-                                    self.message_digest_bytes += bytes({data[current_index]})
-                                    self.end_counter_decode = 0
-
-                                current_index += 1
-
-                        # if end pattern is found then stop collecting data
-                        if self.end_counter_decode == 8:
-                            self.finished_all = True
-
-                    if self.finished_all:
-
-                        #### MESSAGE #####
-                        # Convert bytes to string binary
-                        message_bin = ""
-                        for byte in self.message_bytes:
-                            bin_str = bin(byte)[2:]
-                            for i in range(8 - len(bin_str)):
-                                bin_str = "0" + bin_str
-
-                            message_bin += bin_str[self.key[self.key_counter_decode]]
-                            self.key_counter_decode = (self.key_counter_decode + 1) % len(self.key)
-
-                        # Convert string binary to string
-                        message = ""
-                        message_bin = message_bin[:-8]
-
-                        for i in range(0, len(message_bin), 8):
-                            try:
-                                message = bytes({int(message_bin[i:i + 8], 2)}).decode("utf-8") + message
-                            except Exception as e:
-                                print(e)
-
-                        self.key_counter_decode = 0
-                        ##### MESSAGE DIGEST #####
-                        # Convert bytes to string binary
-                        message_digest_bin = ""
-                        for byte in self.message_digest_bytes:
-                            bin_str = bin(byte)[2:]
-                            for i in range(8 - len(bin_str)):
-                                bin_str = "0" + bin_str
-
-                            message_digest_bin += bin_str[self.key[self.key_counter_decode]]
-                            self.key_counter_decode = (self.key_counter_decode + 1) % len(self.key)
-
-                        # Convert string binary to string
-                        message_digest = ""
-                        message_digest_bin = message_digest_bin[:-8]
-                        for i in range(0, len(message_digest_bin), 8):
-                            message_digest = bytes({int(message_digest_bin[i:i + 8], 2)}).decode(
-                                "utf-8") + message_digest
-
-                        # print
-                        if message_digest == hashlib.sha512(message.encode("utf-8")).hexdigest():
-                            print(message) #TODO do whatever you want with the message
-
-                        self.reset_global_variables_listen()
-            except Exception as e:
-                break
-
-        # Close connection
-        try:
-            self.sock.shutdown(socket.SHUT_RDWR)
-            self.sock.close()
-        except:
-            pass
-
-        self.reset_global_variables_listen()
-
-
-    def speak(self):
-        while not self.end_call:
-            try:
-                # Get data from mic
-                data = self.input_stream.read(self.INPUT_BUFFER)
-
-                # If there is data to be encoded then encode the data before sending
-                if self.encode_data:
-
-                    # Insert data
-                    modified_data = b''
-                    current_index = 0
-
-                    if self.first_round:
-                        # Set the start pattern (8 x 00001111)
-                        for i in range(8):
-                            modified_data += bytes({int('00001111', 2)})
-                            current_index += 1
-                        self.first_round = False
-
-                    # Insert data until end of message binary or end of packet
-                    while current_index < 4096 and self.message_counter < len(self.message_binary):
-                        if self.message_binary[self.message_counter] == "1":
-                            modified_data += bytes(
-                                {data[current_index] | self.get_bitwise_data(1, self.key[self.key_counter_encode])})
-                        else:
-                            modified_data += bytes(
-                                {data[current_index] & self.get_bitwise_data(0, self.key[self.key_counter_encode])})
-                        self.key_counter_encode = (self.key_counter_encode + 1) % len(self.key)
-                        self.message_counter += 1
-                        current_index += 1
-
-                    # If completed the message then start inserting the mid pattern
-                    if self.message_counter == len(self.message_binary):
-
-                        # insert 8 OR until end of packet
-                        while current_index < 4096 and self.mid_counter_encode < 8:
-                            modified_data += bytes({int('00001111', 2)})
-                            current_index += 1
-                            self.mid_counter_encode += 1
-
-                            self.key_counter_encode = 0
-
-                    # If the mid pattern is completed then start sending message digest
-                    if self.mid_counter_encode == 8:
-                        while current_index < 4096 and self.message_digest_counter < len(self.message_digest_binary):
-                            if self.message_digest_binary[self.message_digest_counter] == "1":
-                                modified_data += bytes(
-                                    {data[current_index] | self.get_bitwise_data(1, self.key[self.key_counter_encode])})
-                            else:
-                                modified_data += bytes(
-                                    {data[current_index] & self.get_bitwise_data(0, self.key[self.key_counter_encode])})
-                            self.key_counter_encode = (self.key_counter_encode + 1) % len(self.key)
-                            self.message_digest_counter += 1
-                            current_index += 1
-
-                    # If completed the message digest then start inserting the end pattern
-                    if self.message_counter == len(self.message_binary):
-
-                        # insert 8 OR until end of packet
-                        while current_index < 4096 and self.end_counter_encode < 8:
-                            modified_data += bytes({int('00001111', 2)})
-                            current_index += 1
-                            self.end_counter_encode += 1
-
-                    # If end pattern is completed then end
-                    if self.end_counter_encode == 8:
-                        while current_index < 4096:
-                            modified_data += bytes({data[current_index]})
-                            current_index += 1
-                        self.reset_global_variables_speak()
-
-                    self.client.send(modified_data)
-                    continue
-
-                # Send normal data when no message
-                self.client.send(data)
-            except Exception as e:
-                break
-
-        # Close connection
-        try:
-            self.sock.shutdown(socket.SHUT_RDWR)
-            self.sock.close()
-            print("Call ended")
-
-        except Exception as e:
-            print("Call ended")
-
-        self.reset_global_variables_speak()
-
-
-
 
     def send_message(self, message):
         self.message_binary = bin(int.from_bytes(bytes(message, 'utf-8'), byteorder='little'))[2:]

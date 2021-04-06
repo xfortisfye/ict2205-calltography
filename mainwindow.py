@@ -20,6 +20,11 @@ from server_auth_worker import ServerAuthWorker
 from listen_req_worker import ListenRequestWorker
 from init_req_worker import InitRequestWorker
 from send_ack_worker import SendAckWorker
+from messenger_worker import MessengerWorker
+from client_listen_worker import ClientListenWorker
+from client_speak_worker import ClientSpeakWorker
+from server_listen_worker import ServerListenWorker
+from server_speak_worker import ServerSpeakWorker
 
 class UiMainWindow(QtWidgets.QMainWindow):
 
@@ -47,14 +52,19 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.socket = None
         
         # threading stuff
-        self.counter = None
+        self.dot_counter = None
         self.threadpool = QtCore.QThreadPool()
         self.server_auth_thread = None
         self.listen_req_thread = None
         self.init_req_thread = None
         self.send_ack_thread = None
+        self.messenger_thread = None
+        self.listen_thread = None
+        self.speak_thread = None
 
         # naming
+        self.sender = Sender()
+        self.receiver = Receiver()
         self.sender_name = None
         self.receiver_name = None
 
@@ -79,7 +89,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         
         self.loading_timer = QtCore.QTimer()
         self.loading_timer.setInterval(1000)
-        self.counter = 1
+        self.dot_counter = 1
         self.loading_timer.timeout.connect(self.print_loading_timer)
         self.loading_timer.start()
         
@@ -91,13 +101,13 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.init_error_msg.setStyleSheet("QLabel {color: black;}")
 
         dot_string = ""
-        for _ in range(self.counter):
+        for _ in range(self.dot_counter):
             dot_string += "."
         self.init_error_msg.setText("Loading " + dot_string)
-        self.counter += 1
+        self.dot_counter += 1
 
-        if self.counter > 3:
-            self.counter = 1
+        if self.dot_counter > 3:
+            self.dot_counter = 1
 
     def serverAuthResult(self, error):
         self.loading_timer.stop()
@@ -222,19 +232,22 @@ class UiMainWindow(QtWidgets.QMainWindow):
     def init_send_timer(self):
         self.send_timer = QtCore.QTimer()
         self.send_timer.setInterval(1000)
-        self.counter = 1
+        self.dot_counter = 1
         self.send_timer.timeout.connect(self.print_send_timer)
         self.send_timer.start()
 
     def print_send_timer(self):
         dot_string = ""
-        for _ in range(self.counter):
+        for _ in range(self.dot_counter):
             dot_string += "."
+            
         self.send_call_text.setText("Calling \n" + self.receiver_name + dot_string)
-        self.counter += 1
+        self.dot_counter += 1
 
-        if self.counter > 3:
-            self.counter = 1
+        if self.dot_counter > 3:
+            self.dot_counter = 1
+      
+
 
     def init_call_accepted(self, key, caller_ip):
         self.init_req_thread.wait()
@@ -246,7 +259,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.init_req_thread.signals.timeout.disconnect()
         self.send_timer.stop()
         self.stop_send_call_pg()
-        self.start_chat_pg(self.receiver_name, key, caller_ip, self.client_obj.ip)
+        self.start_chat_pg(self.receiver_name, key, caller_ip, self.client_obj.ip, "sender")
 
     def stop_send_call(self):
 
@@ -278,19 +291,20 @@ class UiMainWindow(QtWidgets.QMainWindow):
         
         self.receive_timer = QtCore.QTimer()
         self.receive_timer.setInterval(1000)
-        self.counter = 1
+        self.dot_counter = 1
         self.receive_timer.timeout.connect(lambda caller_name=caller_name: self.print_recv_timer(caller_name))
         self.receive_timer.start()
 
     def print_recv_timer(self, caller_name):
         dot_string = ""
-        for _ in range(self.counter):
+        for _ in range(self.dot_counter):
             dot_string += "."
+            
         self.recv_call_text.setText(caller_name + "\nis calling" + dot_string)
-        self.counter += 1
+        self.dot_counter += 1
 
-        if self.counter > 3:
-            self.counter = 1
+        if self.dot_counter > 3:
+            self.dot_counter = 1
 
     def init_accept_call(self):
         self.client_obj = self.listen_req_thread.retClient()
@@ -309,7 +323,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.receive_timer.timeout.disconnect()
         self.send_ack_thread.signals.call_accepted.disconnect()
         self.stop_recv_call_pg()
-        self.start_chat_pg(self.sender_name, key, caller_ip, self.client_obj.ip)
+        self.start_chat_pg(self.sender_name, key, caller_ip, self.client_obj.ip, "receiver")
         
     def init_reject_call(self):
         # perform all the actions to process reject call
@@ -320,26 +334,28 @@ class UiMainWindow(QtWidgets.QMainWindow):
     '''
     Page 4/Chat Page's Functions 
     '''
-    def init_end_call(self):
+    def end_conversation(self, messenger):
         # perform all the actions to process end call during chat
+        messenger.end()
+        self.messenger_thread.exit()
+        self.listen_thread.signals.message_received.disconnect()
+        self.listen_thread.exit()
+        self.speak_thread.exit()
         self.stop_chat_pg()
 
-    def init_send_msg(self):
+    def init_send_msg(self, messenger):
         if self.input_msg.toPlainText():
-           message = self.input_msg.toPlainText()
-           self.input_msg.clear()
-           # process message
-
-           ####
-           self.display_send_msg(message)
-           
+            message = self.input_msg.toPlainText()
+            self.input_msg.clear()
+            messenger.send_message(message)
+            self.display_send_msg(message)
         else:
             pass
 
     def display_send_msg(self, message):
         self.model.add_message(USER_ME, message)
 
-    def display_recv_msg():
+    def display_recv_msg(self, message):
         self.model.add_message(USER_THEM, message)
 
     '''
@@ -397,29 +413,51 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.accept_call_button.clicked.disconnect()
         self.reject_call_button.clicked.disconnect()
 
-    def start_chat_pg(self, name, key, caller_ip, host_ip):
+    def start_chat_pg(self, name, key, caller_ip, host_ip, role):
         self.display_name.setEnabled(True)
-        self.display_name.setText(name + caller_ip)
+        self.display_name.setText("😀😀😀😀😀 " + name + " 😀😀😀😀😀")
         self.display_msg.setEnabled(True)
         self.input_msg.setEnabled(True)
         self.send_msg_button.setEnabled(True)
         self.mute_button.setEnabled(True)
-        self.send_msg_button.clicked.connect(lambda: self.init_send_msg())
         #self.mute_button.clicked.connect(lambda: self.init_send_msg()) # andy if time persist then we do
-        self.end_call_button.clicked.connect(lambda: self.init_end_call())
         self.change_page(4)
-        port = 10001
-        #r = Receiver(host_ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
-        port = 10002
-        s = Sender(caller_ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
-        # r.wait_for_call()
-        # s.call()
 
-        receiver = threading.Thread(target=Receiver, args=(host_ip, port, [1, 5, 3, 4, 0, 7, 2, 6],))
-        sender = threading.Thread(target=s.call)
-        receiver.start()
-        sender.start()
+        port = 10001 
+        if role == "sender":
+            self.sender.set_details(caller_ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
+            self.messenger_thread = MessengerWorker("sender", self.sender)
+            self.messenger_thread.start()
+            self.messenger_thread.wait()
+            self.sender = self.messenger_thread.retSender()
+            
+            self.listen_thread = ClientListenWorker(self.sender)
+            self.listen_thread.signals.message_received.connect(self.display_recv_msg)
+            self.listen_thread.start()
+            
+            self.speak_thread = ClientSpeakWorker(self.sender)
+            self.speak_thread.start()
 
+            self.send_msg_button.clicked.connect(lambda: self.init_send_msg(self.sender))
+            self.end_call_button.clicked.connect(lambda: self.end_conversation(self.sender))
+
+        if role == "receiver":
+            self.receiver.set_details(host_ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
+            self.messenger_thread = MessengerWorker("receiver", self.receiver)
+            self.messenger_thread.start()
+            self.messenger_thread.wait()
+            self.receiver = self.messenger_thread.retReceiver()
+           
+            self.listen_thread = ServerListenWorker(self.receiver)
+            self.listen_thread.signals.message_received.connect(self.display_recv_msg)
+            self.listen_thread.start()
+
+            self.speak_thread = ServerSpeakWorker(self.receiver)
+            self.speak_thread.start()
+
+            self.send_msg_button.clicked.connect(lambda: self.init_send_msg(self.receiver))
+            self.end_call_button.clicked.connect(lambda: self.end_conversation(self.receiver))
+            
     def stop_chat_pg(self):
         self.display_name.setEnabled(False)
         self.display_name.setText("")
