@@ -334,9 +334,9 @@ class UiMainWindow(QtWidgets.QMainWindow):
     '''
     Page 4/Chat Page's Functions 
     '''
-    def end_conversation(self, messenger):
+    def end_conversation(self, messenger, name):
         # perform all the actions to process end call during chat
-        messenger.send_message(self.get_nickname() + " has left the chatroom")
+        messenger.send_message(🐱🐱🐱🐱🐱 name + " has left the chatroom 🐱🐱🐱🐱🐱")
         messenger.end()
         self.messenger_thread.exit()
         self.listen_thread.signals.message_received.disconnect()
@@ -420,7 +420,6 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.display_msg.setEnabled(True)
         self.input_msg.setEnabled(True)
         self.send_msg_button.setEnabled(True)
-        self.mute_button.setEnabled(True)
         self.change_page(4)
 
         port = 10001 
@@ -439,7 +438,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
             self.speak_thread.start()
 
             self.send_msg_button.clicked.connect(lambda: self.init_send_msg(self.sender))
-            self.end_call_button.clicked.connect(lambda: self.end_conversation(self.sender))
+            self.end_call_button.clicked.connect(lambda: self.end_conversation(self.sender, name))
 
         if role == "receiver":
 
@@ -457,7 +456,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
             self.speak_thread.start()
 
             self.send_msg_button.clicked.connect(lambda: self.init_send_msg(self.receiver))
-            self.end_call_button.clicked.connect(lambda: self.end_conversation(self.receiver))
+            self.end_call_button.clicked.connect(lambda: self.end_conversation(self.receiver, name))
             
     def stop_chat_pg(self):
         self.display_name.setEnabled(False)
@@ -465,7 +464,6 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.display_msg.setEnabled(False)
         self.input_msg.setEnabled(False)
         self.send_msg_button.setEnabled(False)
-        self.mute_button.setEnabled(False)
         self.send_msg_button.clicked.disconnect()
         self.end_call_button.clicked.disconnect()
         self.model.clear()
