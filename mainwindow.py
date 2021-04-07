@@ -260,7 +260,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.init_req_thread.signals.timeout.disconnect()
         self.send_timer.stop()
         self.stop_send_call_pg()
-        self.start_chat_pg(self.receiver_name, key, "172.27.50.1", "sender") #andy caller_ip
+        self.start_chat_pg(self.receiver_name, key, "172.27.50.178", "sender") #andy caller_ip
 
     def stop_send_call(self):
 
