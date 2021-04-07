@@ -260,7 +260,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.init_req_thread.signals.timeout.disconnect()
         self.send_timer.stop()
         self.stop_send_call_pg()
-        self.start_chat_pg(self.receiver_name, key, caller_ip, "sender")
+        self.start_chat_pg(self.receiver_name, key, "172.27.50.1", "sender") #andy caller_ip
 
     def stop_send_call(self):
 
@@ -324,7 +324,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.receive_timer.timeout.disconnect()
         self.send_ack_thread.signals.call_accepted.disconnect()
         self.stop_recv_call_pg()
-        self.start_chat_pg(self.sender_name, key, self.client_obj.ip, "receiver")
+        self.start_chat_pg(self.sender_name, key, "172.27.51.6", "receiver") #andy self.client_obj.ip
         
     def init_reject_call(self):
         # perform all the actions to process reject call
