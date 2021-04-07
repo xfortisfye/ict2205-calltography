@@ -424,7 +424,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
 
         port = 10001 
         if role == "sender":
-            print("sender " + ip)
+            print("sender " + str(ip))
             
             self.sender.set_details(ip, port, key)
             self.messenger_thread = MessengerWorker("sender", self.sender)
@@ -443,7 +443,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
             self.end_call_button.clicked.connect(lambda: self.end_conversation(self.sender, name))
 
         if role == "receiver":
-            print("receiver " + ip)
+            print("receiver " + str(ip))
             self.receiver.set_details(ip, port, key)
             self.messenger_thread = MessengerWorker("receiver", self.receiver)
             self.messenger_thread.start()
