@@ -7,8 +7,7 @@ import msg_processor
 import cryptodriver
 import time
 
-from call_client import Sender
-from call_server import Receiver
+
 
 class MessengerWorker(QtCore.QThread):
     def __init__(self, role, messenger):
