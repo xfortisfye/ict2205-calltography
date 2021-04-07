@@ -430,7 +430,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         if role == "sender":
             print("sender " + str(ip))
             
-            self.sender.set_details(str(ip), port, key)
+            self.sender.set_details(str(ip), port, get_stegno_position(key))
             self.messenger_thread = MessengerWorker("sender", self.sender)
             self.messenger_thread.start()
             self.messenger_thread.wait()
@@ -448,7 +448,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
 
         if role == "receiver":
             print("receiver " + str(ip))
-            self.receiver.set_details(str(ip), port, key)
+            self.receiver.set_details(str(ip), port, get_stegno_position(key))
             self.messenger_thread = MessengerWorker("receiver", self.receiver)
             self.messenger_thread.start()
             self.messenger_thread.wait()
