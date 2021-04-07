@@ -424,6 +424,8 @@ class UiMainWindow(QtWidgets.QMainWindow):
 
         port = 10001 
         if role == "sender":
+            print("sender " + ip)
+            
             self.sender.set_details(ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
             self.messenger_thread = MessengerWorker("sender", self.sender)
             self.messenger_thread.start()
@@ -441,7 +443,8 @@ class UiMainWindow(QtWidgets.QMainWindow):
             self.end_call_button.clicked.connect(lambda: self.end_conversation(self.sender, name))
 
         if role == "receiver":
-
+            print("receiver " + ip)
+            sleep(2)
             self.receiver.set_details(ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
             self.messenger_thread = MessengerWorker("receiver", self.receiver)
             self.messenger_thread.start()
@@ -479,7 +482,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
     ##################
 
     def connect_server(self):
-        host = '127.0.0.1'
+        host = '172.27.51.27'
         port = 8888
 
         self.socket = socket.socket()
