@@ -339,6 +339,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
     def end_conversation(self, messenger, name):
         # perform all the actions to process end call during chat
         messenger.send_message(self.get_nickname() + " has left the chatroom ")
+        time.sleep(1)
         messenger.end()
         self.messenger_thread.exit()
         self.listen_thread.signals.message_received.disconnect()
@@ -528,5 +529,4 @@ class UiMainWindow(QtWidgets.QMainWindow):
 
         for i in range(len(key)):
             stegno_position_list.append(int(key[i]) % 8)
-            print(str(int(key[i]) % 8))
         return stegno_position_list
