@@ -259,7 +259,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.init_req_thread.signals.timeout.disconnect()
         self.send_timer.stop()
         self.stop_send_call_pg()
-        self.start_chat_pg(self.receiver_name, key, caller_ip, "sender")
+        self.start_chat_pg(self.receiver_name, key, self.client_obj.get_ip, "sender")
 
     def stop_send_call(self):
 
@@ -444,7 +444,6 @@ class UiMainWindow(QtWidgets.QMainWindow):
 
         if role == "receiver":
             print("receiver " + ip)
-            sleep(2)
             self.receiver.set_details(ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
             self.messenger_thread = MessengerWorker("receiver", self.receiver)
             self.messenger_thread.start()

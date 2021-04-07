@@ -177,3 +177,6 @@ class Client:
         response = self.encrypt_content(response)
 
         self.send_msg(response)
+
+    def get_ip(self):
+        return self.ip
