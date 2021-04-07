@@ -289,7 +289,6 @@ class Server_socket:
                         print("acked")
                         response = "header: CALL_REQ_RES content: ack [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
                         self.send_enc_msg(response)
-                        print("L291 call target has acknowledge")
                         self.caller_exchange_ip_ecdh()
                         # call_requests_status.pop(self.call_target)
                         call_requests_status[self.call_target] = False

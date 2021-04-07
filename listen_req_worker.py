@@ -85,7 +85,6 @@ class ListenRequestWorker(QtCore.QThread):
                                 # go back to contacts page
                                 print("timeout")
                                 self.signals.timeout.emit()
-                                # HI ANDY DO YOUR MAGIC HERE!!!
                                 break
 
                         #logic for pausing the listener
@@ -97,7 +96,6 @@ class ListenRequestWorker(QtCore.QThread):
 
             # logic for pausing the listener
             if not self.listen_call:
-                print("we here bro?")
                 break
 
             time.sleep(1)

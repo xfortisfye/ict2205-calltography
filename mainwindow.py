@@ -428,8 +428,6 @@ class UiMainWindow(QtWidgets.QMainWindow):
 
         port = 10001 
         if role == "sender":
-            print("sender " + str(ip))
-            
             self.sender.set_details(str(ip), port, self.get_stegno_position(key))
             self.messenger_thread = MessengerWorker("sender", self.sender)
             self.messenger_thread.start()
@@ -447,7 +445,6 @@ class UiMainWindow(QtWidgets.QMainWindow):
             self.end_call_button.clicked.connect(lambda: self.end_conversation(self.sender, name))
 
         if role == "receiver":
-            print("receiver " + str(ip))
             self.receiver.set_details(str(ip), port, self.get_stegno_position(key))
             self.messenger_thread = MessengerWorker("receiver", self.receiver)
             self.messenger_thread.start()

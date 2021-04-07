@@ -70,7 +70,6 @@ class InitRequestWorker(QtCore.QThread):
 
                     if msg and msg_processor.get_header_field(msg) == "CALLER_IP":
                         caller_ip = msg_processor.get_content_field(msg)
-                        print("INIT_REQ_WORKER DYLAN IP" + caller_ip)
 
                         key_obj = cryptodriver.make_dhe_key_obj()
                         own_public_key = cryptodriver.make_dhe_keypair(key_obj)
