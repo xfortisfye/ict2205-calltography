@@ -13,8 +13,6 @@ import PyQt5.QtMultimediaWidgets
 from PyQt5 import uic, QtWidgets, QtCore, QtGui
 import time
 import client_class
-from call_client import Sender
-from call_server import Receiver
 from msg_design import *
 from server_auth_worker import ServerAuthWorker
 from listen_req_worker import ListenRequestWorker
