@@ -261,7 +261,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.send_timer.stop()
         self.stop_send_call_pg()
         print("CORRECT SENDER IP: 172.27.51.6 current ip : " + caller_ip)
-        self.start_chat_pg(self.receiver_name, key, , "sender") #andy caller_ip
+        self.start_chat_pg(self.receiver_name, key, caller_ip, "sender") #andy caller_ip
 
     def stop_send_call(self):
 
