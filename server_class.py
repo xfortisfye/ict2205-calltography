@@ -23,8 +23,8 @@ class Server_socket:
         self.caller = None
         self.call_target = None
 
-        self.ip = self.socket.getsockname()[0]
-        self.port = self.socket.getsockname()[1]
+        self.ip = self.socket.getpeername()[0]
+        self.port = self.socket.getpeername()[1]
 
     def send_msg(self, msg):
         self.socket.send(str.encode(msg))
