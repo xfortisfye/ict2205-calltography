@@ -12,7 +12,7 @@ class Client:
         self.shared_key = ""
         self.client_server_aes_key = ""
         self.server_client_enc = False
-
+        
         self.ip = self.socket.getsockname()[0]
         self.port = self.socket.getsockname()[1]
 
