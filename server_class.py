@@ -289,6 +289,7 @@ class Server_socket:
                         print("acked")
                         response = "header: CALL_REQ_RES content: ack [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
                         self.send_enc_msg(response)
+                        print("L291 call target has acknowledge")
                         self.caller_exchange_ip_ecdh()
                         # call_requests_status.pop(self.call_target)
                         call_requests_status[self.call_target] = False
@@ -357,13 +358,14 @@ class Server_socket:
         # =============== EXCHANGE IP =============== #
         # get call_target ip (to send to the user)
         call_target_ip = str(user_ip_dict[self.call_target][0])
-
+        
+        print("L call target ip" + call_target_ip)
         # build ip response
         response = "header: CALLER_IP content: " + call_target_ip + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
 
         # send response
         self.send_enc_msg(response)
-
+        print("L call target response " + response)
         # =============== EXCHANGE ECDH =============== #
         # waits for call_target public key
         call_target_key = self.wait_for_user_pub_key(self.call_target)
