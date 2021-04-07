@@ -336,7 +336,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
     '''
     def end_conversation(self, messenger, name):
         # perform all the actions to process end call during chat
-        messenger.send_message(🐱🐱🐱🐱🐱 name + " has left the chatroom 🐱🐱🐱🐱🐱")
+        messenger.send_message(name + " has left the chatroom ")
         messenger.end()
         self.messenger_thread.exit()
         self.listen_thread.signals.message_received.disconnect()
