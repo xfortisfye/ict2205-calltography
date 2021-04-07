@@ -3,7 +3,7 @@ from PyQt5 import QtCore
 import traceback
 import sys
 from client_class import Client
-# from call_client import Sender
+from call_client import Sender
 import msg_processor
 import cryptodriver
 import hashlib

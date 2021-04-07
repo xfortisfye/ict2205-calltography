@@ -9,10 +9,13 @@ from threading import Thread
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
 import PyQt5.QtMultimedia
 import PyQt5.QtMultimediaWidgets
-
+from call_client import Sender
+from call_server import Receiver
 from PyQt5 import uic, QtWidgets, QtCore, QtGui
 import time
 import client_class
+from call_client import Sender
+from call_server import Receiver
 from msg_design import *
 from server_auth_worker import ServerAuthWorker
 from listen_req_worker import ListenRequestWorker
@@ -424,7 +427,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         if role == "sender":
             print("sender " + str(ip))
             
-            self.sender.set_details(ip, port, key)
+            self.sender.set_details(ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
             self.messenger_thread = MessengerWorker("sender", self.sender)
             self.messenger_thread.start()
             self.messenger_thread.wait()
@@ -442,7 +445,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
 
         if role == "receiver":
             print("receiver " + str(ip))
-            self.receiver.set_details(ip, port, key)
+            self.receiver.set_details(ip, port, [1, 5, 3, 4, 0, 7, 2, 6])
             self.messenger_thread = MessengerWorker("receiver", self.receiver)
             self.messenger_thread.start()
             self.messenger_thread.wait()
