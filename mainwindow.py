@@ -430,7 +430,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         if role == "sender":
             print("sender " + str(ip))
             
-            self.sender.set_details(str(ip), port, [1, 5, 3, 4, 0, 7, 2, 6])
+            self.sender.set_details(str(ip), port, key)
             self.messenger_thread = MessengerWorker("sender", self.sender)
             self.messenger_thread.start()
             self.messenger_thread.wait()
@@ -448,7 +448,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
 
         if role == "receiver":
             print("receiver " + str(ip))
-            self.receiver.set_details(str(ip), port, [1, 5, 3, 4, 0, 7, 2, 6])
+            self.receiver.set_details(str(ip), port, key)
             self.messenger_thread = MessengerWorker("receiver", self.receiver)
             self.messenger_thread.start()
             self.messenger_thread.wait()
@@ -530,12 +530,8 @@ class UiMainWindow(QtWidgets.QMainWindow):
     def get_stegno_position(self, key):
         # extract the key position to determine the audio arrangement to stegno the message
         stegno_position_list = []
-        stegno_position_list.append(int(key[72]))
-        stegno_position_list.append(int(key[174]))
-        stegno_position_list.append(int(key[255]))
-        stegno_position_list.append(int(key[321]))
-        stegno_position_list.append(int(key[413]))
-        stegno_position_list.append(int(key[479]))
-        stegno_position_list.append(int(key[526]))
-        stegno_position_list.append(int(key[587]))
+
+        for i in range(len(key)):
+            stegno_position_list.append(int(key[i]) % 8)
+            print(str(int(key[i]) % 8))
         return stegno_position_list
