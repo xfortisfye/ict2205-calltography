@@ -260,7 +260,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.init_req_thread.signals.timeout.disconnect()
         self.send_timer.stop()
         self.stop_send_call_pg()
-        self.start_chat_pg(self.receiver_name, key, caller_ip, "sender") #andy caller_ip
+        self.start_chat_pg(self.receiver_name, key, caller_ip, "sender")
 
     def stop_send_call(self):
 
@@ -274,8 +274,6 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.init_req_thread.signals.call_accepted.disconnect()
         self.init_req_thread.signals.reject.disconnect()
         self.init_req_thread.signals.timeout.disconnect()
-
-        #self.client_obj.send_call_canc()
 
         self.stop_send_call_pg()
         self.start_contact_pg()
@@ -325,7 +323,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
         self.send_ack_thread.signals.call_accepted.disconnect()
         self.stop_recv_call_pg()
         
-        self.start_chat_pg(self.sender_name, key, self.client_obj.ip, "receiver") #andy self.client_obj.ip
+        self.start_chat_pg(self.sender_name, key, self.client_obj.ip, "receiver")
         
     def init_reject_call(self):
         # perform all the actions to process reject call
@@ -338,7 +336,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
     '''
     def end_conversation(self, messenger, name):
         # perform all the actions to process end call during chat
-        messenger.send_message(self.get_nickname() + " has left the chatroom ")
+        messenger.send_message(name + " has left the chatroom ")
         time.sleep(1)
         messenger.end()
         self.messenger_thread.exit()
@@ -481,7 +479,7 @@ class UiMainWindow(QtWidgets.QMainWindow):
     ##################
 
     def connect_server(self):
-        host = '172.27.51.27'
+        host = '127.0.0.1'
         port = 8888
 
         self.socket = socket.socket()

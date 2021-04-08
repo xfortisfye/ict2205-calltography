@@ -19,7 +19,6 @@ class ServerListenWorker(QtCore.QThread):
     def __init__(self, role):
         super(ServerListenWorker, self).__init__()
 
-        # Store constructor arguments (re-used for processing)
         self.signals = WorkerSignals()
         self.role = role
 

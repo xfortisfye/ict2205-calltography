@@ -84,20 +84,20 @@ class Server_socket:
                     own_rsa_public_key = keypair[1]
                     message = "place holder"
 
-                    key_obj = cryptodriver.make_dhe_key_obj()
-                    own_dhe_public_key = cryptodriver.make_dhe_keypair(key_obj)
+                    key_obj = cryptodriver.make_edhe_key_obj()
+                    own_edhe_public_key = cryptodriver.make_edhe_keypair(key_obj)
 
                     signature = cryptodriver.make_rsa_sig(own_rsa_private_key, message)
                     payload = own_rsa_public_key.decode("ISO-8859-1") + "{\n}" + signature.decode(
-                        "ISO-8859-1") + "{\n}" + own_dhe_public_key
+                        "ISO-8859-1") + "{\n}" + own_edhe_public_key
 
                     encrypted_payload = cryptodriver.encrypt_rsa_aes(recipient_key, payload)
                     response = "header: SE_AUTH_SIG_KEY content: " + encrypted_payload + " [EOM]"
                     self.send_msg(response)
 
-                    self.shared_key = cryptodriver.make_dhe_sharedkey(key_obj, recipient_ecdh)
+                    self.shared_key = cryptodriver.make_edhe_sharedkey(key_obj, recipient_ecdh)
                     print("Client pub key is " + recipient_ecdh)
-                    print("Server pub key is: " + own_dhe_public_key)
+                    print("Server pub key is: " + own_edhe_public_key)
                     print("Server shared key is: " + self.shared_key)
                     self.server_client_enc = True
                     self.derive_aeskey()
@@ -115,12 +115,12 @@ class Server_socket:
                 print("=================================")
 
                 recipient_public_key = msg_processor.get_content_field(msg)
-                key_obj = cryptodriver.make_dhe_key_obj()
-                own_public_key = cryptodriver.make_dhe_keypair(key_obj)
+                key_obj = cryptodriver.make_edhe_key_obj()
+                own_public_key = cryptodriver.make_edhe_keypair(key_obj)
                 response = "header: SE_PUB_KEY content: " + own_public_key + " [EOM]"
                 self.send_msg(response)
 
-                self.shared_key = cryptodriver.make_dhe_sharedkey(key_obj, recipient_public_key)
+                self.shared_key = cryptodriver.make_edhe_sharedkey(key_obj, recipient_public_key)
                 print("Client pub key is " + recipient_public_key)
                 print("Server pub key is: " + own_public_key)
                 print("Server shared key is: " + self.shared_key)
@@ -358,13 +358,11 @@ class Server_socket:
         # get call_target ip (to send to the user)
         call_target_ip = str(user_ip_dict[self.call_target][0])
         
-        print("L call target ip" + call_target_ip)
         # build ip response
         response = "header: CALLER_IP content: " + call_target_ip + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
 
         # send response
         self.send_enc_msg(response)
-        print("L call target response " + response)
         # =============== EXCHANGE ECDH =============== #
         # waits for call_target public key
         call_target_key = self.wait_for_user_pub_key(self.call_target)

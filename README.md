@@ -37,7 +37,12 @@ If above doesn't work, uninstall the following and try again.
 > pip uninstall pycryptodome
 > pip uninstall pycryptodomex
 ```
-3. Install PyAudio
+3. Install cryptography
+```bash
+> cd \Path\to\ict2205-crypto-secure-comms
+> pip install cryptography
+```
+4. Install PyAudio
 ```bash
 > cd \Path\to\ict2205-crypto-secure-comms
 > pip install wheel
@@ -48,7 +53,7 @@ Checking of python version: `> python`
 ```bash
 > pip install PyAudio-0.2.11-cp39-cp39-win_amd64.whl
 ```
-4. Install [codecs](https://files3.codecguide.com/K-Lite_Codec_Pack_1610_Full.exe)
+5. Install [codecs](https://files3.codecguide.com/K-Lite_Codec_Pack_1610_Full.exe)
 
 #### Setting up GNU Make (Optional)
 1. [Install](https://sourceforge.net/projects/gnuwin32/files/make/3.81/make-3.81.exe/download?use_mirror=nchc&download=) Make for Windows

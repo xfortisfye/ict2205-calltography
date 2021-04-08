@@ -21,13 +21,11 @@ class MessengerWorker(QtCore.QThread):
     @QtCore.pyqtSlot()
     def run(self):
         if self.role == "sender":
-            print("sender host : " + str(self.messenger.host) +  " port: " + str(self.messenger.port) + " key : " + str(self.messenger.key))
             self.messenger.reset_global_variables_listen()
             self.messenger.reset_global_variables_speak()
             self.messenger.call()
             
         if self.role == "receiver":
-            print("receiver host : " + str(self.messenger.host) +  " port: " + str(self.messenger.port )+ " key : " + str(self.messenger.key))
             self.messenger.reset_global_variables_listen()
             self.messenger.reset_global_variables_speak()
             self.messenger.wait_for_call()

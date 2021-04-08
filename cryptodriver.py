@@ -10,7 +10,9 @@ from Crypto.Random import get_random_bytes
 import json
 from base64 import b64decode
 from Crypto.Cipher import AES
-import pyDHE
+from ecdh import ECDH
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives import serialization
 
 
 # placeholder
@@ -124,21 +126,18 @@ def verify_rsa_sig(public_key, message, signature):
         print("The signature is not authentic.")
         return False
 
-
-def make_dhe_key_obj():
-    key_obj = pyDHE.new()
+def make_edhe_key_obj():
+    key_obj = ECDH()
     return key_obj
 
-
-def make_dhe_keypair(key_obj):
+def make_edhe_keypair(key_obj):
     own_public_key = key_obj.getPublicKey()
     return str(own_public_key)
 
-
-def make_dhe_sharedkey(key_obj, recepient_public_key):
-    shared_key = key_obj.update(int(recepient_public_key))
-    return str(shared_key)
-
+def make_edhe_sharedkey(key_obj, recepient_public_key):
+    decoded_public_key = ec.EllipticCurvePublicKey.from_encoded_point(key_obj.curve, recepient_public_key.encode("ISO-8859-1"))
+    shared_key = key_obj.getPrivateKey().exchange(ec.ECDH(), decoded_public_key)
+    return str(int.from_bytes(shared_key, byteorder='little'))
 
 def encrypt_aes_gcm(key, data):
     header = b"header"

@@ -20,7 +20,6 @@ class InitRequestWorker(QtCore.QThread):
     def __init__(self, client, call_target):
         super(InitRequestWorker, self).__init__()
 
-        # Store constructor arguments (re-used for processing)
         self.signals = WorkerSignals()
         self.client = client
         self.call_target = call_target
@@ -28,10 +27,6 @@ class InitRequestWorker(QtCore.QThread):
 
     @QtCore.pyqtSlot()
     def run(self):
-        '''
-        Initialise the runner function with passed args, kwargs.
-        '''
-
         print("calling....")
 
         response = "header: CALL_REQ content: " + self.call_target + " [EOM]"
@@ -71,8 +66,8 @@ class InitRequestWorker(QtCore.QThread):
                     if msg and msg_processor.get_header_field(msg) == "CALLER_IP":
                         caller_ip = msg_processor.get_content_field(msg)
 
-                        key_obj = cryptodriver.make_dhe_key_obj()
-                        own_public_key = cryptodriver.make_dhe_keypair(key_obj)
+                        key_obj = cryptodriver.make_edhe_key_obj()
+                        own_public_key = cryptodriver.make_edhe_keypair(key_obj)
                         msg = self.client.recv_msg()
                         msg = self.client.decrypt_content(msg)
                         print(msg)
@@ -80,13 +75,13 @@ class InitRequestWorker(QtCore.QThread):
                         if msg_processor.get_header_field(msg) == "CALL_PUB_KEY":
 
                             recipient_public_key = msg_processor.get_content_field(msg)
-                            key_obj = cryptodriver.make_dhe_key_obj()
-                            own_public_key = cryptodriver.make_dhe_keypair(key_obj)
+                            key_obj = cryptodriver.make_edhe_key_obj()
+                            own_public_key = cryptodriver.make_edhe_keypair(key_obj)
                             response = "header: CALL_PUB_KEY content: " + own_public_key + " [EOM]"
 
                             response = self.client.encrypt_content(response)
                             self.client.send_msg(response)
-                            shared_key = cryptodriver.make_dhe_sharedkey(key_obj, recipient_public_key)
+                            shared_key = cryptodriver.make_edhe_sharedkey(key_obj, recipient_public_key)
                             self.signals.call_accepted.emit(shared_key, caller_ip)
                             print("Shared: key is: " + shared_key)
                             break

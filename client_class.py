@@ -56,12 +56,12 @@ class Client:
             own_rsa_public_key = keypair[1]
 
             # ecdh
-            key_obj = cryptodriver.make_dhe_key_obj()
-            own_dhe_public_key = cryptodriver.make_dhe_keypair(key_obj)
+            key_obj = cryptodriver.make_edhe_key_obj()
+            own_edhe_public_key = cryptodriver.make_edhe_keypair(key_obj)
 
             # build response
             response = "header: SE_AUTH_REQ content: " + own_rsa_public_key.decode(
-                "ISO-8859-1") + "{\n}" + own_dhe_public_key + " [EOM]"
+                "ISO-8859-1") + "{\n}" + own_edhe_public_key + " [EOM]"
 
             # encrypt with server public key
             response = cryptodriver.encrypt_rsa_aes(open('server_rsa_pub_key.pem').read(), response)
@@ -89,9 +89,9 @@ class Client:
                             if server_auth:
 
 
-                                self.shared_key = cryptodriver.make_dhe_sharedkey(key_obj, recipient_public_key)
+                                self.shared_key = cryptodriver.make_edhe_sharedkey(key_obj, recipient_public_key)
                                 print("Server pub key is " + recipient_public_key)
-                                print("Client pub key is: " + own_dhe_public_key)
+                                print("Client pub key is: " + own_edhe_public_key)
                                 print("Client shared key is: " + self.shared_key)
                                 self.server_client_enc = True
                                 self.derive_aeskey()
@@ -106,8 +106,8 @@ class Client:
     def exchange_ecdh(self):
         while True:
 
-            key_obj = cryptodriver.make_dhe_key_obj()
-            own_public_key = cryptodriver.make_dhe_keypair(key_obj)
+            key_obj = cryptodriver.make_edhe_key_obj()
+            own_public_key = cryptodriver.make_edhe_keypair(key_obj)
 
             response = "header: US_PUB_KEY content: " + own_public_key + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
 
@@ -118,7 +118,7 @@ class Client:
             if msg_processor.get_header_field(msg) == "SE_PUB_KEY":
                 recipient_public_key = msg_processor.get_content_field(msg)
 
-                self.shared_key = cryptodriver.make_dhe_sharedkey(key_obj, recipient_public_key)
+                self.shared_key = cryptodriver.make_edhe_sharedkey(key_obj, recipient_public_key)
                 print("Server pub key is " + recipient_public_key)
                 print("Client pub key is: " + own_public_key)
                 print("Client shared key is: " + self.shared_key)

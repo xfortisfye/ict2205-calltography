@@ -7,8 +7,6 @@ import threading
 
 
 def multi_threaded_controller(connection):
-
-
     proceed = True
 
     connection.send(str.encode('Connected to server'))
@@ -47,7 +45,7 @@ def multi_threaded_controller(connection):
 
 
 
-HOST = '172.27.51.27'  # currently set to localhost
+HOST = '127.0.0.1'  # currently set to localhost
 
 PORT = 8888  # temp port (pls choose good port like 6969 or 420)
 

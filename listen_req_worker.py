@@ -20,17 +20,12 @@ class ListenRequestWorker(QtCore.QThread):
     def __init__(self, client):
         super(ListenRequestWorker, self).__init__()
 
-        # Store constructor arguments (re-used for processing)
         self.signals = WorkerSignals()
         self.client = client
         self.listen_call = True
 
     @QtCore.pyqtSlot()
     def run(self):
-        '''
-        Initialise the runner function with passed args, kwargs.
-        '''
-
         # Retrieve args/kwargs here; and fire processing using them
         while True:
             print("Starting call listener...")
