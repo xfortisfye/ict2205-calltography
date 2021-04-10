@@ -9,8 +9,6 @@ import msg_processor
 import cryptodriver
 import time
 
-
-
 class MessengerWorker(QtCore.QThread):
     def __init__(self, role, messenger):
         super(MessengerWorker, self).__init__()

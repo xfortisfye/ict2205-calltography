@@ -7,20 +7,13 @@ import msg_processor
 import cryptodriver
 import time
 import select
-
-
-class WorkerSignals(QtCore.QObject):
-    caller = QtCore.pyqtSignal(str)
-    init_recv_call = QtCore.pyqtSignal()
-    reject = QtCore.pyqtSignal()
-    timeout = QtCore.pyqtSignal()
-
+from worker_signal import ListenReqWorkerSignals
 
 class ListenRequestWorker(QtCore.QThread):
     def __init__(self, client):
         super(ListenRequestWorker, self).__init__()
 
-        self.signals = WorkerSignals()
+        self.signals = ListenReqWorkerSignals()
         self.client = client
         self.listen_call = True
 

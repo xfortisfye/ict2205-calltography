@@ -4,20 +4,14 @@ from PyQt5 import QtCore
 import msg_processor
 import cryptodriver
 import time
-
-
-class WorkerSignals(QtCore.QObject):
-    start_timer = QtCore.pyqtSignal()
-    call_accepted = QtCore.pyqtSignal(str, str)
-    reject = QtCore.pyqtSignal()
-    timeout = QtCore.pyqtSignal()
+from worker_signal import InitReqWorkerSignals
 
 
 class InitRequestWorker(QtCore.QThread):
     def __init__(self, client, call_target):
         super(InitRequestWorker, self).__init__()
 
-        self.signals = WorkerSignals()
+        self.signals = InitReqWorkerSignals()
         self.client = client
         self.call_target = call_target
         self.listen_call = True

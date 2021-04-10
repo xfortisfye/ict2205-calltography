@@ -9,17 +9,13 @@ import cryptodriver
 import hashlib
 import time
 import select
-
-
-class WorkerSignals(QtCore.QObject):
-    message_received = QtCore.pyqtSignal(str)
-
+from worker_signal import MsgWorkerSignals
 
 class ServerListenWorker(QtCore.QThread):
     def __init__(self, role):
         super(ServerListenWorker, self).__init__()
 
-        self.signals = WorkerSignals()
+        self.signals = MsgWorkerSignals()
         self.role = role
 
     @QtCore.pyqtSlot()

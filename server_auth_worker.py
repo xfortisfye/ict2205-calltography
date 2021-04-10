@@ -2,13 +2,9 @@ from PyQt5 import QtCore
 
 import traceback
 import sys
+from worker_signal import ServerAuthWorkerSignals
 
 
-class WorkerSignals(QtCore.QObject):
-    finished = QtCore.pyqtSignal()
-    error = QtCore.pyqtSignal(tuple)
-    result = QtCore.pyqtSignal(object)
-    progress = QtCore.pyqtSignal(int)
 
 
 class ServerAuthWorker(QtCore.QRunnable):
@@ -19,7 +15,7 @@ class ServerAuthWorker(QtCore.QRunnable):
         self.fn = fn
         self.args = args
         self.kwargs = kwargs
-        self.signals = WorkerSignals()
+        self.signals = ServerAuthWorkerSignals()
 
         # Add the callback to our kwargs
         # self.kwargs['progress_callback'] = self.signals.progress

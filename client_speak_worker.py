@@ -8,18 +8,13 @@ import msg_processor
 import cryptodriver
 import time
 import select
-
-
-class WorkerSignals(QtCore.QObject):
-    message_received = QtCore.pyqtSignal(str)
-
+from worker_signal import MsgWorkerSignals
 
 class ClientSpeakWorker(QtCore.QThread):
     def __init__(self, role):
         super(ClientSpeakWorker, self).__init__()
 
-        # Store constructor arguments (re-used for processing)
-        self.signals = WorkerSignals()
+        self.signals = MsgWorkerSignals()
         self.role = role
 
     @QtCore.pyqtSlot()

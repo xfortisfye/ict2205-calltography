@@ -7,20 +7,13 @@ import msg_processor
 import cryptodriver
 import time
 import select
-
-
-class WorkerSignals(QtCore.QObject):
-    finished = QtCore.pyqtSignal()
-    error = QtCore.pyqtSignal(tuple)
-    result = QtCore.pyqtSignal()
-    call_accepted = QtCore.pyqtSignal(str, str)
-
+from worker_signal import SendAckWorkerSignals
 
 class SendAckWorker(QtCore.QThread):
     def __init__(self, client):
         super(SendAckWorker, self).__init__()
 
-        self.signals = WorkerSignals()
+        self.signals = SendAckWorkerSignals()
         self.client = client
 
     @QtCore.pyqtSlot()
