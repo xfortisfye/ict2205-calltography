@@ -15,19 +15,8 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import serialization
 
 
-# placeholder
-# def get_rsa_keypair():
-#     key = RSA.generate(2048)
-#     private_key = key.export_key()
-#     public_key = key.public_key().export_key()
-#     file_out = open("server_rsa_priv_key.pem", "wb")
-#     file_out.write(private_key)
-#     file_out.close()
-#     file_out = open("server_rsa_pub_key.pem", "wb")
-#     file_out.write(public_key)
-#     file_out.close()
-#     return [private_key, public_key]
-
+def sha512(data):
+    return hashlib.sha512(data.encode()).hexdigest()
 
 def hmac_sha256(key, data):
     return hmac.new(key, data, hashlib.sha256).digest()

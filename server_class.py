@@ -1,5 +1,6 @@
 import msg_processor
 import cryptodriver
+
 import time
 
 online_users = []
@@ -82,14 +83,19 @@ class Server_socket:
                     keypair = cryptodriver.get_rsa_keypair()
                     own_rsa_private_key = keypair[0]
                     own_rsa_public_key = keypair[1]
-                    message = "place holder"
+
 
                     key_obj = cryptodriver.make_edhe_key_obj()
                     own_edhe_public_key = cryptodriver.make_edhe_keypair(key_obj)
 
-                    signature = cryptodriver.make_rsa_sig(own_rsa_private_key, message)
-                    payload = own_rsa_public_key.decode("ISO-8859-1") + "{\n}" + signature.decode(
-                        "ISO-8859-1") + "{\n}" + own_edhe_public_key
+
+
+                    sig_message = own_rsa_public_key.decode("ISO-8859-1") + "{\n}" + own_edhe_public_key
+                    hashed_sig_message= cryptodriver.sha512(sig_message)
+                    signature = cryptodriver.make_rsa_sig(own_rsa_private_key, hashed_sig_message)
+                    payload = own_rsa_public_key.decode("ISO-8859-1") + "{\n}" + own_edhe_public_key + "{\n}" + signature.decode(
+                        "ISO-8859-1")
+
 
                     encrypted_payload = cryptodriver.encrypt_rsa_aes(recipient_key, payload)
                     response = "header: SE_AUTH_SIG_KEY content: " + encrypted_payload + " [EOM]"
@@ -106,29 +112,7 @@ class Server_socket:
 
                     return True
 
-    def wait_exchange_ecdh(self):
-        while True:
-            msg = self.recv_msg()
-            if msg_processor.get_header_field(msg) == "US_PUB_KEY":
-                print("=================================")
-                print("Performing ECDH exchange")
-                print("=================================")
 
-                recipient_public_key = msg_processor.get_content_field(msg)
-                key_obj = cryptodriver.make_edhe_key_obj()
-                own_public_key = cryptodriver.make_edhe_keypair(key_obj)
-                response = "header: SE_PUB_KEY content: " + own_public_key + " [EOM]"
-                self.send_msg(response)
-
-                self.shared_key = cryptodriver.make_edhe_sharedkey(key_obj, recipient_public_key)
-                print("Client pub key is " + recipient_public_key)
-                print("Server pub key is: " + own_public_key)
-                print("Server shared key is: " + self.shared_key)
-                self.server_client_enc = True
-                self.derive_aeskey()
-
-                print("ECDH exchange successful\n\n")
-                return True
 
     # waits for user to enter username
     def wait_username_check(self):

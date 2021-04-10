@@ -81,13 +81,16 @@ class Client:
                         if encrypted_data:
                             key_sig = cryptodriver.decrypt_rsa_aes(own_rsa_private_key, encrypted_data).decode(
                                 "utf-8").split("{\n}")
-                            server_key = key_sig[0].encode("ISO-8859-1")
-                            server_sig = key_sig[1].encode("ISO-8859-1")
 
-                            recipient_public_key = key_sig[2]
-                            server_auth = cryptodriver.verify_rsa_sig(server_key, "place holder", server_sig)
+                            server_key = key_sig[0]
+                            recipient_public_key = key_sig[1]
+                            server_sig = key_sig[2]
+
+                            sig_message = server_key+"{\n}"+recipient_public_key
+                            hashed_sig_message = cryptodriver.sha512(sig_message)
+
+                            server_auth = cryptodriver.verify_rsa_sig(server_key.encode("ISO-8859-1"),hashed_sig_message , server_sig.encode("ISO-8859-1"))
                             if server_auth:
-
 
                                 self.shared_key = cryptodriver.make_edhe_sharedkey(key_obj, recipient_public_key)
                                 print("Server pub key is " + recipient_public_key)
@@ -103,30 +106,6 @@ class Client:
                                 print("server verification failed retrying..")
                                 retries += 1
 
-    def exchange_ecdh(self):
-        while True:
-
-            key_obj = cryptodriver.make_edhe_key_obj()
-            own_public_key = cryptodriver.make_edhe_keypair(key_obj)
-
-            response = "header: US_PUB_KEY content: " + own_public_key + " [EOM]"  # msg structure smt like header=purpose of msg                                                    #contents== msg contents (e.g audio data, or nickname in this case                                                        #[EOM] signifies end of messag
-
-            self.send_msg(response)
-
-            msg = self.recv_msg()
-
-            if msg_processor.get_header_field(msg) == "SE_PUB_KEY":
-                recipient_public_key = msg_processor.get_content_field(msg)
-
-                self.shared_key = cryptodriver.make_edhe_sharedkey(key_obj, recipient_public_key)
-                print("Server pub key is " + recipient_public_key)
-                print("Client pub key is: " + own_public_key)
-                print("Client shared key is: " + self.shared_key)
-                self.server_client_enc = True
-                self.derive_aeskey()
-                return True
-            else:
-                return False
 
     def set_username(self, username):
         if self.server_client_enc:
