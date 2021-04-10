@@ -63,7 +63,19 @@ Checking of python version: `> python`
    3. Click on Edit, enter Make location. Usually: `C:\Program Files (x86)\GnuWin32\bin`
 
 ## Running the Project
-### Option 1: Using GNU Make
+### Option 1: Using Python
+1. Run server.py (currently is set to localhost)
+```bash
+> cd \Path\to\ict2205-crypto-secure-comms
+> py server.py
+```
+2. Run main.py
+```bash
+> cd \Path\to\ict2205-crypto-secure-comms
+> py main.py
+```
+
+### Option 2: Using GNU Make (For main.py only)
 1. To run the program
 ```bash
 > cd \Path\to\ict2205-crypto-secure-comms
@@ -73,7 +85,6 @@ Checking of python version: `> python`
 ```bash
 > make clean
 ```
-
 
 ## Collaborators
 | Name                        | GitHub                                         |
