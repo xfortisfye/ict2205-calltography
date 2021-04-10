@@ -52,8 +52,7 @@ def encrypt_rsa_aes(recipient_key, data):
     ciphertext, tag = cipher_aes.encrypt_and_digest(data)
     for x in (enc_session_key, cipher_aes.nonce, tag, ciphertext):
         output = output + x.decode("ISO-8859-1") + "{\n}"
-    # print("\n")
-    # print(output)
+
     return output
 
 
@@ -85,14 +84,7 @@ def get_rsa_keypair():
     return [private_key, public_key]
 
 
-# https://pycryptodome.readthedocs.io/en/latest/src/signature/pkcs1_pss.html
-##PKCS#1 PSS (RSA)
-# def make_rsa_sig():
-#     message = "To be signed"
-#     key = RSA.import_key(open('server_rsa_priv_key.pem').read())
-#     h = SHA256.new(message.encode())
-#     signature = pss.new(key).sign(h)
-#     return signature
+
 
 def make_rsa_sig(private_key, message):
     key = RSA.import_key(private_key)

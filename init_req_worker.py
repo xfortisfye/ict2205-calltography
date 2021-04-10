@@ -1,12 +1,9 @@
 from PyQt5 import QtCore
 
-import traceback
-import sys
-from client_class import Client
+
 import msg_processor
 import cryptodriver
 import time
-import select
 
 
 class WorkerSignals(QtCore.QObject):
@@ -32,7 +29,6 @@ class InitRequestWorker(QtCore.QThread):
         response = "header: CALL_REQ content: " + self.call_target + " [EOM]"
         response = self.client.encrypt_content(response)
         self.client.send_msg(response)
-        # self.signals.call_target.emit(self.call_target)  # Return the result of the processing
         self.signals.start_timer.emit()
 
         while True:
@@ -91,7 +87,6 @@ class InitRequestWorker(QtCore.QThread):
                     # go back to contacts page
                     print("dec")
                     self.signals.reject.emit()
-                    # HI ANDY DO YOUR MAGIC HERE!!!
                     break
 
                 # if waiting means recipient still has not responded
@@ -104,7 +99,6 @@ class InitRequestWorker(QtCore.QThread):
                     # go back to contacts page
                     self.signals.timeout.emit()
                     print("timeout")
-                    # HI ANDY DO YOUR MAGIC HERE!!!
                     break
 
             time.sleep(1)

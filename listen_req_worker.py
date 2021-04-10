@@ -67,7 +67,6 @@ class ListenRequestWorker(QtCore.QThread):
                                 # go back to contacts page
                                 print("canc")
                                 self.signals.reject.emit()
-                                # HI ANDY DO YOUR MAGIC HERE!!!
                                 break
 
                             # if status is waiting
