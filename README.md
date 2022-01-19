@@ -1,33 +1,22 @@
-# ict2205-crypto-secure-comms
-
-## Table of Contents <!-- omit in toc -->
-- [Setting Up](#setting-up)
-  - [Windows](#windows)
-    - [Cloning GitHub Repository (using vscode)](#cloning-github-repository-using-vscode)
-    - [Installing Python](#installing-python)
-    - [Installing Dependencies](#installing-dependencies)
-    - [Setting up GNU Make](#setting-up-gnu-make)
-- [Running the Project](#running-the-project)
-  - [Option 1: Using GNU Make](#option-1-using-gnu-make)
-- [Collaborators](#collaborators)
+# ict2205-calltography
 
 ## Setting Up
 ### Windows
 #### Cloning GitHub Repository (using [vscode](https://code.visualstudio.com/))
 1. Press: Ctrl + Shift + P
 2. Type: 'Clone' and select 'Git: Clone'
-3. Paste `https://github.com/ehandywhyy/ict2205-crypto-secure-comms`
+3. Paste `https://github.com/ehandywhyy/ict2205-calltography`
 4. Enter your GitHub credentials & select a location to save the repository
 
 #### Installing Dependencies
 1. Install PyQt5
 ```bash
-> cd \Path\to\ict2205-crypto-secure-comms
+> cd \Path\to\ict2205-calltography
 > pip install PyQt5
 ```
 2. Install pycryptodome
 ```bash
-> cd \Path\to\ict2205-crypto-secure-comms
+> cd \Path\to\ict2205-calltography
 > pip install pycryptodome
 ```
 If above doesn't work, uninstall the following and try again.
@@ -39,16 +28,16 @@ If above doesn't work, uninstall the following and try again.
 ```
 3. Install cryptography
 ```bash
-> cd \Path\to\ict2205-crypto-secure-comms
+> cd \Path\to\ict2205-calltography
 > pip install cryptography
 ```
 4. Install PyAudio
 ```bash
-> cd \Path\to\ict2205-crypto-secure-comms
+> cd \Path\to\ict2205-calltography
 > pip install wheel
 > pip install PyAudio
 ```
-If above doesn't work, [Install](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio) your respective wheel version to `\Path\to\ict2205-crypto-secure-comms`
+If above doesn't work, [Install](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio) your respective wheel version to `\Path\to\ict2205-calltography`
 Checking of python version: `> python`
 ```bash
 > pip install PyAudio-0.2.11-cp39-cp39-win_amd64.whl
@@ -66,19 +55,19 @@ Checking of python version: `> python`
 ### Option 1: Using Python
 1. Run server.py (currently is set to localhost)
 ```bash
-> cd \Path\to\ict2205-crypto-secure-comms
+> cd \Path\to\ict2205-calltography
 > py server.py
 ```
 2. Run main.py
 ```bash
-> cd \Path\to\ict2205-crypto-secure-comms
+> cd \Path\to\ict2205-calltography
 > py main.py
 ```
 
 ### Option 2: Using GNU Make (For main.py only)
 1. To run the program
 ```bash
-> cd \Path\to\ict2205-crypto-secure-comms
+> cd \Path\to\ict2205-calltography
 > make
 ```
 2. To clean compiled files (.pyc)
@@ -93,4 +82,4 @@ Checking of python version: `> python`
 | **Poh Xiang Bin**           | [@xenbon](https://github.com/xenbon)           |
 | **Dylan Yong Kenn Litt**    | [@milosaur](https://github.com/milosaur)       | 
 | **Nicholas Poon Keet Hoe**  | [@roodysfun](https://github.com/roodysfun)     |
-| **Chua Chiang Sheng, Andy** | [@ehandywhyy](https://github.com/ehandywhyy)   |
+| **Chua Chiang Sheng, Andy** | [@xfortisfye](https://github.com/xfortisfye)   |
