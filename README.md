@@ -2,12 +2,6 @@
 
 ## Setting Up
 ### Windows
-#### Cloning GitHub Repository (using [vscode](https://code.visualstudio.com/))
-1. Press: Ctrl + Shift + P
-2. Type: 'Clone' and select 'Git: Clone'
-3. Paste `https://github.com/ehandywhyy/ict2205-calltography`
-4. Enter your GitHub credentials & select a location to save the repository
-
 #### Installing Dependencies
 1. Install PyQt5
 ```bash
