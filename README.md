@@ -2,7 +2,7 @@
 
 ## Setting Up
 ### Windows
-#### Installing Dependencies
+#### Install Dependencies
 1. Install PyQt5
 ```bash
 > cd \Path\to\ict2205-calltography
