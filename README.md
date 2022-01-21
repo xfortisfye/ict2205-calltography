@@ -40,10 +40,7 @@ Checking of python version: `> python`
 
 #### Setting up GNU Make (Optional)
 1. [Install](https://sourceforge.net/projects/gnuwin32/files/make/3.81/make-3.81.exe/download?use_mirror=nchc&download=) Make for Windows
-2. Set up environment PATH, if not you will not be unable to run `make`
-   1. Right-click on 'This PC' > Properties > Advance System Settings > Environment Variables
-   2. Under System Variable, Select PATH
-   3. Click on Edit, enter Make location. Usually: `C:\Program Files (x86)\GnuWin32\bin`
+2. Set up [environment path](https://github.com/xfortisfye/303-see-other/blob/main/env-path.md). Usually value is `C:\Program Files (x86)\GnuWin32\bin`
 
 ## Running the Project
 ### Option 1: Using Python
