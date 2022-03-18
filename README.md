@@ -37,10 +37,7 @@ Checking of python version: `> python`
 > pip install PyAudio-0.2.11-cp39-cp39-win_amd64.whl
 ```
 5. Install [codecs](https://files3.codecguide.com/K-Lite_Codec_Pack_1610_Full.exe)
-
-#### Setting up GNU Make (Optional)
-1. [Install](https://sourceforge.net/projects/gnuwin32/files/make/3.81/make-3.81.exe/download?use_mirror=nchc&download=) Make for Windows
-2. Set up [environment path](https://github.com/xfortisfye/303-see-other/blob/main/env-path.md). Usually value is `C:\Program Files (x86)\GnuWin32\bin`
+6. Install [make](https://github.com/xfortisfye/303-see-other/blob/main/dependencies.md#make) (Optional)
 
 ## Running the Project
 ### Option 1: Using Python
